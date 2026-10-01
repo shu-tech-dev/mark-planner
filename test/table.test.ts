@@ -87,3 +87,10 @@ test('cellPatch validates edits and maps keys', () => {
   assert.equal(cellPatch('id', 'x', props), undefined);
   assert.equal(cellPatch('path', 'x', props), undefined);
 });
+
+test('remaining column sorts by the provided key, empties last', () => {
+  const keys = new Map([['b-child', 3], ['a-child', -2], ['grandchild', 0]]);
+  const rows = buildTable(items, q({ sort: { column: 'remaining', dir: 'asc' } }), DEFAULT_STATUSES, (i) => keys.get(i.title))[0].rows;
+  const children = rows.filter((r) => r.depth === 1).map((r) => r.item.title);
+  assert.deepEqual(children, ['a-child', 'b-child']);
+});

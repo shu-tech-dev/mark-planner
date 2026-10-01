@@ -2,7 +2,7 @@ import { parentMap } from './hierarchy';
 import { ItemType, normalizeDate, PlannerItem, PropertyMap } from './model';
 import { resolveStatus, StatusDef } from './settings';
 
-export const COLUMN_IDS = ['title', 'type', 'status', 'start', 'end', 'tags', 'parent', 'depends', 'path'] as const;
+export const COLUMN_IDS = ['title', 'type', 'status', 'start', 'end', 'remaining', 'tags', 'parent', 'depends', 'path'] as const;
 export type ColumnId = (typeof COLUMN_IDS)[number];
 export type SortDir = 'asc' | 'desc';
 export type GroupBy = 'none' | 'status' | 'type';
@@ -73,6 +73,7 @@ export function comparator(
   query: TableQuery,
   statuses: StatusDef[],
   titleOf: (id: string | undefined) => string,
+  remainingOf: (item: PlannerItem) => number | undefined = () => undefined,
 ): (a: PlannerItem, b: PlannerItem) => number {
   const byDefault = (a: PlannerItem, b: PlannerItem) =>
     compareKeys(a.start ?? a.end, b.start ?? b.end, 'asc') || a.title.localeCompare(b.title);
@@ -92,6 +93,8 @@ export function comparator(
         return i.start;
       case 'end':
         return i.end;
+      case 'remaining':
+        return remainingOf(i);
       case 'tags':
         return i.tags.join(', ');
       case 'parent':
@@ -110,10 +113,16 @@ export function comparator(
  * sorted. Ancestors of matching items stay visible so the hierarchy reads correctly.
  * Grouped modes: flat rows per status/type group.
  */
-export function buildTable(items: PlannerItem[], query: TableQuery, statuses: StatusDef[]): TableGroup[] {
+export function buildTable(
+  items: PlannerItem[],
+  query: TableQuery,
+  statuses: StatusDef[],
+  /** Sort key for the "remaining" column (see remainingSortKey). */
+  remainingOf?: (item: PlannerItem) => number | undefined,
+): TableGroup[] {
   const byId = new Map(items.flatMap((i) => (i.id ? [[i.id, i] as const] : [])));
   const titleOf = (id: string | undefined) => (id ? (byId.get(id)?.title ?? id) : '');
-  const compare = comparator(query, statuses, titleOf);
+  const compare = comparator(query, statuses, titleOf, remainingOf);
 
   if (query.group !== 'none') {
     const groups = new Map<string, PlannerItem[]>();

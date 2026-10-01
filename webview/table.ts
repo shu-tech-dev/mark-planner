@@ -11,7 +11,9 @@ import {
   TableQuery,
   TableRow,
 } from '../src/table';
+import { businessCalendar, remainingBusinessDays, remainingLabel, remainingSortKey, type Remaining } from '../src/businessDays';
 import { formatDisplayDate } from '../src/dateFormat';
+import { formatDate as isoDate } from './dates';
 import { attachDatePicker, parseEditorText, toEditorText } from './datepicker';
 import { icon } from './icons';
 import { closePopover, menuList, openPopover } from './menu';
@@ -35,13 +37,14 @@ const DEFAULT_COLUMNS: ColumnState[] = [
   { id: 'status', visible: true, width: 128 },
   { id: 'start', visible: true, width: 150 },
   { id: 'end', visible: true, width: 150 },
+  { id: 'remaining', visible: true, width: 140 },
   { id: 'tags', visible: true, width: 170 },
   { id: 'parent', visible: false, width: 170 },
   { id: 'depends', visible: false, width: 170 },
   { id: 'path', visible: false, width: 240 },
 ];
 const TYPES: ItemType[] = ['task', 'event', 'holiday'];
-const READ_ONLY: ColumnId[] = ['depends', 'path'];
+const READ_ONLY: ColumnId[] = ['remaining', 'depends', 'path'];
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, ...children: (Node | string)[]) {
   const e = document.createElement(tag);
@@ -69,11 +72,13 @@ function sanitizeState(raw: unknown): TableState {
       columns.push({ id: def.id, visible: c.visible !== false, width: Number(c.width) || def.width });
     }
   }
-  for (const def of DEFAULT_COLUMNS) {
+  // Columns added in later versions go next to their default neighbor.
+  DEFAULT_COLUMNS.forEach((def, i) => {
     if (!columns.some((c) => c.id === def.id)) {
-      columns.push({ ...def });
+      const after = columns.findIndex((c) => c.id === DEFAULT_COLUMNS[i - 1]?.id);
+      columns.splice(after + 1, 0, { ...def });
     }
-  }
+  });
   // The title column always stays visible.
   columns.find((c) => c.id === 'title')!.visible = true;
   return { query: { ...DEFAULT_QUERY, ...(state.query ?? {}) }, columns };
@@ -274,9 +279,19 @@ export class TableView {
 
   // ---- table -----------------------------------------------------------
 
+  /** Remaining business days per item, recomputed on each render (today may change). */
+  private remaining = new Map<PlannerItem, Remaining | undefined>();
+
   private renderTable(): void {
     const columns = this.state.columns.filter((c) => c.visible);
-    const groups = buildTable(this.items, this.state.query, this.settings.statuses);
+    const cal = businessCalendar(this.items, this.settings);
+    const today = isoDate(new Date());
+    this.remaining = new Map(
+      this.items.map((i) => [i, remainingBusinessDays(i, today, cal, this.settings)] as const),
+    );
+    const groups = buildTable(this.items, this.state.query, this.settings.statuses, (i) =>
+      remainingSortKey(this.remaining.get(i)),
+    );
     const total = groups.reduce((n, g) => n + g.rows.length, 0);
     const count = document.getElementById('tbl-count');
     if (count) {
@@ -513,6 +528,11 @@ export class TableView {
             ),
           ),
         );
+        break;
+      }
+      case 'remaining': {
+        const r = this.remaining.get(item);
+        td.append(r ? el('span', `remaining ${r.kind}`, remainingLabel(r, this.lang)) : el('span', 'muted', '—'));
         break;
       }
       case 'depends': {

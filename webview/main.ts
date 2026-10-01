@@ -81,9 +81,10 @@ function rangeOptions(): { value: string; label: string; active: boolean; select
 }
 
 function renderAppBar() {
-  document.body.dataset.view = state.view;
+  // Not `data-view`: that attribute marks the view buttons.
+  document.body.dataset.activeView = state.view;
   document
-    .querySelectorAll<HTMLButtonElement>('[data-view]')
+    .querySelectorAll<HTMLButtonElement>('button[data-view]')
     .forEach((b) => b.classList.toggle('active', b.dataset.view === state.view));
   $('nav-title').textContent =
     state.view === 'calendar' ? state.calendarNav.title : state.view === 'settings' ? t(state.lang, 'settings.title') : '';
@@ -121,7 +122,7 @@ function render() {
   renderAppBar();
 }
 
-document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((button) =>
+document.querySelectorAll<HTMLButtonElement>('button[data-view]').forEach((button) =>
   button.addEventListener('click', () => {
     state.view = button.dataset.view as View;
     render();

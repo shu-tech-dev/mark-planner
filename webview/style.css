@@ -223,11 +223,11 @@ textarea {
   white-space: nowrap;
 }
 /* Per-view chrome: settings/table have no navigation; the Gantt chart only "today". */
-body[data-view='settings'] .nav .btn,
-body[data-view='settings'] .nav .btn-pair,
-body[data-view='table'] .nav .btn,
-body[data-view='table'] .nav .btn-pair,
-body[data-view='gantt'] .nav .btn-pair {
+body[data-active-view='settings'] .nav .btn,
+body[data-active-view='settings'] .nav .btn-pair,
+body[data-active-view='table'] .nav .btn,
+body[data-active-view='table'] .nav .btn-pair,
+body[data-active-view='gantt'] .nav .btn-pair {
   display: none;
 }
 @media (max-width: 760px) {
@@ -536,6 +536,10 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev:hover {
   stroke-opacity: 0.7;
 }
 .gantt .bar-wrapper[class*='_d-1_'] .bar-progress {
+  display: none;
+}
+/* frappe-gantt leaves an empty popup box at the top-left until the first click. */
+.gantt-container .popup-wrapper:empty {
   display: none;
 }
 .gantt-container .popup-wrapper {
@@ -1163,6 +1167,19 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev:hover {
 }
 .ref {
   color: var(--mp-text-muted);
+}
+.remaining {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--mp-text-muted);
+}
+.remaining.today {
+  color: #d97706;
+  font-weight: 600;
+}
+.remaining.overdue {
+  color: var(--mp-danger);
+  font-weight: 600;
 }
 .path {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

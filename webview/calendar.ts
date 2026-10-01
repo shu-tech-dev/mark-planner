@@ -4,6 +4,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import jaLocale from '@fullcalendar/core/locales/ja';
 import { ancestorTitles, parentMap } from '../src/hierarchy';
+import { businessCalendar, remainingBusinessDays, remainingLabel } from '../src/businessDays';
 import { japaneseHoliday, japaneseHolidaysBetween, vacationDays, weekendColor } from '../src/holidays';
 import type { PlannerItem } from '../src/model';
 import { CalendarView as CalendarViewSetting, Lang, PlannerSettings, resolveStatus } from '../src/settings';
@@ -79,9 +80,10 @@ export class CalendarView {
       eventDidMount: (info) => {
         // Background events (holidays, vacation shading) carry no ancestors.
         const ancestors: string[] = info.event.extendedProps.ancestors ?? [];
-        info.el.title = ancestors.length
-          ? `${[...ancestors].reverse().join(' › ')} › ${info.event.title}`
-          : info.event.title;
+        const remaining: string | undefined = info.event.extendedProps.remaining;
+        info.el.title =
+          (ancestors.length ? `${[...ancestors].reverse().join(' › ')} › ${info.event.title}` : info.event.title) +
+          (remaining ? `\n${remaining}` : '');
       },
       dateClick: (info) => post({ type: 'create', date: info.allDay ? info.dateStr : formatDateTime(info.date) }),
       datesSet: (arg) => {
@@ -170,7 +172,13 @@ export class CalendarView {
     const dated = items
       .filter((i) => i.start ?? i.end)
       .filter((i) => i.type === 'holiday' || !(settings.hideDone && resolveStatus(i.status, settings.statuses).done));
-    const events = dated.map((i) => toEvent(i, parents, settings));
+    const cal = businessCalendar(items, settings);
+    const today = formatDate(new Date());
+    const events = dated.map((i) => {
+      const remaining = remainingBusinessDays(i, today, cal, settings);
+      const event = toEvent(i, parents, settings);
+      return remaining ? { ...event, extendedProps: { ...event.extendedProps, remaining: remainingLabel(remaining, lang) } } : event;
+    });
     // Shade the days of each vacation, in addition to its draggable bar.
     const vacationShades = dated
       .filter((i) => i.type === 'holiday')
