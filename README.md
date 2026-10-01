@@ -6,7 +6,7 @@
 
 ```markdown
 ---
-id: k3f9x2            # 自動付与。parent/depends はこのIDで参照する
+id: tk2m9a            # 作成時刻から自動生成。parent/depends はこのIDで参照する
 title: 設計レビュー
 type: task            # task | event
 status: todo          # todo | doing | done
@@ -22,6 +22,14 @@ depends: [p0q7z4]
 
 `start` または `end` を持つファイルが対象です。`id` だけを持つ日付なしのファイルも、親タスクとして使えます。
 
+## ID とファイル名
+
+新規作成したファイルは `tk2m9a-設計レビュー.md` のように ID を頭に付けます。
+
+- ID は作成時刻（2020年からの秒数）の36進数なので、ファイル名順＝作成順になる。
+- ID は変わらないので、日付を動かしてもファイル名は古くならない。`Ctrl+P` で ID を打てばファイルが開ける。
+- 正は frontmatter の `id`。ファイル名を手で変えても参照は壊れない。
+
 ## 親子関係
 
 子タスクに `parent: <親のid>` を書きます。
@@ -33,8 +41,8 @@ depends: [p0q7z4]
 ## コマンド
 
 - `Mark Planner: カレンダーを開く` / `ガントチャートを開く`
-- `Mark Planner: 新規タスク/予定` — `planner/YYYY-MM-DD-タイトル.md` を作成（重複時は `-2` などを付与）
-- `Mark Planner: 重複IDを振り直す`
+- `Mark Planner: 新規タスク/予定` — `planner/<id>-タイトル.md` を作成
+- `Mark Planner: 重複IDを振り直す` — コピー側に新しいIDを振り、ファイル名の頭のIDも付け替える
 
 ## 設定
 

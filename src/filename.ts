@@ -12,9 +12,20 @@ export function sanitizeTitle(title: string): string {
   return truncated || 'untitled';
 }
 
-/** `2026-10-06-定例MTG` (without extension). */
-export function baseFileName(date: string, title: string): string {
-  return `${date.slice(0, 10)}-${sanitizeTitle(title)}`;
+/** `tk2m9a-定例MTG` (without extension). */
+export function baseFileName(id: string, title: string): string {
+  return `${id}-${sanitizeTitle(title)}`;
+}
+
+/**
+ * Swaps the ID prefix of a file name (`old-x.md` → `new-x.md`).
+ * Returns undefined when the name does not start with `oldId`.
+ */
+export function replaceIdPrefix(fileName: string, oldId: string, newId: string): string | undefined {
+  if (fileName === `${oldId}.md` || fileName.startsWith(`${oldId}-`)) {
+    return newId + fileName.slice(oldId.length);
+  }
+  return undefined;
 }
 
 /** Appends `-2`, `-3`, ... until `exists` reports the name as free. */

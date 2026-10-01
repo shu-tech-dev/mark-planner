@@ -25,7 +25,7 @@ export async function run(): Promise<void> {
 
   const review = store.getItems().find((i) => i.title === '設計レビュー')!;
   await store.patch(review.key, { start: '2026-10-13', end: '2026-10-15' });
-  const text = await read('planner/2026-10-06-review.md');
+  const text = await read('planner/aaa111-review.md');
   assert.match(text, /^id: aaa111 # comment stays$/m);
   assert.match(text, /^start: 2026-10-13$/m);
   assert.match(text, /^end: 2026-10-15$/m);
@@ -34,15 +34,21 @@ export async function run(): Promise<void> {
   console.log('ok: patch writes frontmatter and watcher reindexes');
 
   // Simulate the user duplicating the file.
-  const copy = vscode.Uri.joinPath(root, 'planner/copy-of-review.md');
-  await vscode.workspace.fs.copy(vscode.Uri.joinPath(root, 'planner/2026-10-06-review.md'), copy);
+  const copy = vscode.Uri.joinPath(root, 'planner/aaa111-review copy.md');
+  await vscode.workspace.fs.copy(vscode.Uri.joinPath(root, 'planner/aaa111-review.md'), copy);
   await waitFor(() => store.duplicateIds().has('aaa111'), 'duplicate detected');
   console.log('ok: duplicate id detected');
 
   await vscode.commands.executeCommand('markPlanner.fixDuplicateIds');
-  await waitFor(() => store.duplicateIds().size === 0, 'duplicates fixed');
+  await waitFor(
+    () => store.duplicateIds().size === 0 && store.getItems().every((i) => i.path.startsWith(`planner/${i.id}-`)),
+    'duplicates fixed and renamed',
+  );
   assert.equal(store.get(review.key)?.id, 'aaa111');
-  assert.notEqual(store.get(copy.toString())?.id, 'aaa111');
+  const reassigned = store.getItems().find((i) => i.key !== review.key)!;
+  assert.notEqual(reassigned.id, 'aaa111');
+  assert.equal(reassigned.path, `planner/${reassigned.id}-review copy.md`);
+  console.log('ok: copied file renamed to its new id prefix');
   console.log('ok: duplicate id reassigned, original kept');
 
   await vscode.commands.executeCommand('markPlanner.openCalendar');
