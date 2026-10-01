@@ -225,6 +225,13 @@
           "description": "%config.hideDone%",
           "order": 11
         },
+        "markPlanner.maxEventsPerDay": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0,
+          "description": "%config.maxEventsPerDay%",
+          "order": 12
+        },
         "markPlanner.weekendDays": {
           "type": "array",
           "items": {
@@ -238,27 +245,27 @@
           ],
           "uniqueItems": true,
           "description": "%config.weekendDays%",
-          "order": 12
+          "order": 13
         },
         "markPlanner.showHolidays": {
           "type": "boolean",
           "default": true,
           "description": "%config.showHolidays%",
-          "order": 13
+          "order": 14
         },
         "markPlanner.holidayColor": {
           "type": "string",
           "format": "color",
           "default": "#f14c4c",
           "description": "%config.holidayColor%",
-          "order": 14
+          "order": 15
         },
         "markPlanner.vacationColor": {
           "type": "string",
           "format": "color",
           "default": "#2ea043",
           "description": "%config.vacationColor%",
-          "order": 15
+          "order": 16
         },
         "markPlanner.language": {
           "type": "string",
@@ -274,7 +281,7 @@
             "日本語",
             "English"
           ],
-          "order": 16
+          "order": 17
         }
       }
     }

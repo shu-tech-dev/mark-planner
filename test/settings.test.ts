@@ -49,6 +49,9 @@ test('normalizeSettings falls back to defaults for invalid values', () => {
   assert.deepEqual(s['template.frontmatter'], {});
   assert.equal(s.language, 'auto');
   assert.equal(normalizeSettings({ weekStart: 1 }).weekStart, 1);
+  assert.equal(normalizeSettings({ maxEventsPerDay: 5 }).maxEventsPerDay, 5);
+  assert.equal(normalizeSettings({ maxEventsPerDay: -1 }).maxEventsPerDay, 0);
+  assert.equal(normalizeSettings({ maxEventsPerDay: 2.5 }).maxEventsPerDay, 0);
 });
 
 test('normalizeStatuses drops bad rows and clamps values', () => {

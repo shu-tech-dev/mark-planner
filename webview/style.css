@@ -143,6 +143,7 @@ main { flex: 1; min-height: 0; padding: 12px; }
   font: inherit;
 }
 .settings select { width: auto; min-width: 160px; }
+.settings input.narrow { width: 80px; }
 .settings textarea { resize: vertical; }
 .settings .mono, .settings textarea { font-family: var(--vscode-editor-font-family, monospace); }
 .settings input:focus, .settings textarea:focus, .settings select:focus {

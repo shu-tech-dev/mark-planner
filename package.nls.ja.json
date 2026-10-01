@@ -35,5 +35,6 @@
   "config.weekendDays": "休日として扱う曜日（0 = 日曜, 6 = 土曜）。",
   "config.showHolidays": "日本の祝日を表示する。",
   "config.holidayColor": "祝日の色。",
-  "config.vacationColor": "自分の休暇（type: holiday）の色。"
+  "config.vacationColor": "自分の休暇（type: holiday）の色。",
+  "config.maxEventsPerDay": "カレンダーで1日に表示する件数。超えた分は「他 N 件」にまとめます。0 なら全件を表示し、マスを縦に伸ばします。"
 }

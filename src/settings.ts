@@ -25,6 +25,8 @@ export interface PlannerSettings {
   ganttViewMode: GanttViewMode;
   weekStart: number;
   hideDone: boolean;
+  /** Events shown per day cell before collapsing into "+N more"; 0 = no limit (cells grow). */
+  maxEventsPerDay: number;
   /** Days of week treated as non-working (0 = Sunday). */
   weekendDays: number[];
   /** Show Japanese public holidays. */
@@ -55,6 +57,7 @@ export const DEFAULT_SETTINGS: PlannerSettings = {
   ganttViewMode: 'Day',
   weekStart: 0,
   hideDone: false,
+  maxEventsPerDay: 0,
   weekendDays: [0, 6],
   showHolidays: true,
   holidayColor: '#f14c4c',
@@ -122,6 +125,9 @@ export function normalizeSettings(raw: Partial<Record<SettingKey, unknown>>): Pl
     ganttViewMode: oneOf(raw.ganttViewMode, ['Day', 'Week', 'Month'], d.ganttViewMode),
     weekStart: Number.isInteger(weekStart) && weekStart >= 0 && weekStart <= 6 ? weekStart : d.weekStart,
     hideDone: raw.hideDone === true,
+    maxEventsPerDay: Number.isInteger(raw.maxEventsPerDay) && (raw.maxEventsPerDay as number) >= 0
+      ? (raw.maxEventsPerDay as number)
+      : d.maxEventsPerDay,
     weekendDays: Array.isArray(raw.weekendDays)
       ? [...new Set(raw.weekendDays.filter((d): d is number => Number.isInteger(d) && d >= 0 && d <= 6))].sort()
       : d.weekendDays,

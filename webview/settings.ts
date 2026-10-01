@@ -105,6 +105,7 @@ export class SettingsView {
             ['Month', this.tr('settings.ganttViewMode.Month')],
           ]),
           this.checkboxField('hideDone', 'settings.hideDone'),
+          this.numberField('maxEventsPerDay', 'settings.maxEventsPerDay', 0, 99),
         ),
         this.section(
           'settings.section.holidays',
@@ -217,6 +218,16 @@ export class SettingsView {
     });
     this.bind(key, select, (s) => (select.value = String(s[key])));
     return this.row(key, label, select);
+  }
+
+  private numberField(key: SettingKey, label: MessageKey, min: number, max: number) {
+    const input = h('input', { type: 'number', min, max, step: 1, class: 'narrow' });
+    input.addEventListener('change', () => {
+      const value = Math.round(Number(input.value));
+      save(key, Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : undefined);
+    });
+    this.bind(key, input, (s) => (input.value = String(s[key])));
+    return this.row(key, label, input);
   }
 
   private checkboxField(key: SettingKey, label: MessageKey) {

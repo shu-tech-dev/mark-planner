@@ -28,7 +28,6 @@ export class CalendarView {
       headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
       height: '100%',
       editable: true,
-      dayMaxEvents: true,
       // Show timed events as colored bars in month view too, so colors are visible.
       eventDisplay: 'block',
       eventClick: (info) => {
@@ -53,6 +52,8 @@ export class CalendarView {
   update(items: PlannerItem[], settings: PlannerSettings, lang: Lang): void {
     this.calendar.setOption('locale', lang === 'ja' ? jaLocale : 'en');
     this.calendar.setOption('firstDay', settings.weekStart);
+    // 0: day cells grow to fit every event; n: show n, then "+N more".
+    this.calendar.setOption('dayMaxEvents', settings.maxEventsPerDay || false);
     document.documentElement.style.setProperty('--mp-holiday-color', settings.holidayColor);
 
     // Day cells: weekend shading, holiday/vacation day numbers in color.

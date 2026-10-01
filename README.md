@@ -77,6 +77,7 @@ end: 2026-10-20
 | `markPlanner.weekStart` | `0`（日曜） | 週の開始曜日 |
 | `markPlanner.ganttViewMode` | `Day` | ガントの初期スケール |
 | `markPlanner.hideDone` | `false` | 完了扱いのタスクを表示しない |
+| `markPlanner.maxEventsPerDay` | `0`（無制限） | カレンダーで1日に表示する件数。0 なら全件表示してマスを縦に伸ばし、n なら超えた分を「他 N 件」にまとめる |
 | `markPlanner.weekendDays` | `[0, 6]`（日・土） | 休日として塗る曜日 |
 | `markPlanner.showHolidays` | `true` | 日本の祝日を表示する |
 | `markPlanner.holidayColor` / `vacationColor` | `#f14c4c` / `#2ea043` | 祝日／休暇の色 |
