@@ -50,6 +50,8 @@ test('normalizeSettings falls back to defaults for invalid values', () => {
   assert.equal(s.language, 'auto');
   assert.equal(normalizeSettings({ weekStart: 1 }).weekStart, 1);
   assert.equal(normalizeSettings({ maxEventsPerDay: 5 }).maxEventsPerDay, 5);
+  assert.equal(normalizeSettings({ theme: 'dark' }).theme, 'dark');
+  assert.equal(normalizeSettings({ theme: 'sepia' }).theme, 'auto');
   assert.equal(normalizeSettings({ maxEventsPerDay: -1 }).maxEventsPerDay, 0);
   assert.equal(normalizeSettings({ maxEventsPerDay: 2.5 }).maxEventsPerDay, 0);
 });

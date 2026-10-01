@@ -89,6 +89,11 @@ export class SettingsView {
         ),
         this.section(
           'settings.section.display',
+          this.selectField('theme', 'settings.theme', [
+            ['auto', this.tr('settings.theme.auto')],
+            ['light', this.tr('settings.theme.light')],
+            ['dark', this.tr('settings.theme.dark')],
+          ]),
           this.selectField('calendarView', 'settings.calendarView', [
             ['month', this.tr('settings.calendarView.month')],
             ['week', this.tr('settings.calendarView.week')],

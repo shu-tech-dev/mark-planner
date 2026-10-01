@@ -73,6 +73,7 @@ end: 2026-10-20
 | `markPlanner.properties` | `{}` | キー名の読み替え（例: `{"end": "due"}`） |
 | `markPlanner.statuses` | todo / doing / done | ステータスの値・表示名・色・進捗率・完了扱い。先頭が新規作成時の初期値 |
 | `markPlanner.eventColor` | `#b180d7` | `type: event` の色 |
+| `markPlanner.theme` | `auto` | 画面のテーマ（`auto` = VS Code に合わせる / `light` / `dark`） |
 | `markPlanner.calendarView` | `month` | カレンダーの初期表示 |
 | `markPlanner.weekStart` | `0`（日曜） | 週の開始曜日 |
 | `markPlanner.ganttViewMode` | `Day` | ガントの初期スケール |

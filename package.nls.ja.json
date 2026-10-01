@@ -36,5 +36,9 @@
   "config.holidayColor": "祝日の色。",
   "config.vacationColor": "自分の休暇（type: holiday）の色。",
   "config.maxEventsPerDay": "カレンダーで1日に表示する件数。超えた分は「他 N 件」にまとめます。0 なら全件を表示し、マスを縦に伸ばします。",
-  "config.weekendColors": "休日として扱う曜日と背景色。キーは `0`（日曜）〜`6`（土曜）。例: `{\"0\": \"#f14c4c\", \"6\": \"#3794ff\"}`"
+  "config.weekendColors": "休日として扱う曜日と背景色。キーは `0`（日曜）〜`6`（土曜）。例: `{\"0\": \"#f14c4c\", \"6\": \"#3794ff\"}`",
+  "config.theme": "Mark Planner の画面のテーマ。",
+  "config.theme.auto": "VS Code のテーマ（ライト／ダーク）に合わせる",
+  "config.theme.light": "常にライト",
+  "config.theme.dark": "常にダーク"
 }

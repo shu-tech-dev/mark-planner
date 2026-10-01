@@ -36,5 +36,9 @@
   "config.holidayColor": "Color of public holidays.",
   "config.vacationColor": "Color of your vacation days (type: holiday).",
   "config.maxEventsPerDay": "Events shown per day in the calendar before collapsing into \"+N more\". 0 shows all events and lets day cells grow.",
-  "config.weekendColors": "Weekdays treated as days off and their background colors. Keys are `0` (Sunday) to `6` (Saturday), e.g. `{\"0\": \"#f14c4c\", \"6\": \"#3794ff\"}`."
+  "config.weekendColors": "Weekdays treated as days off and their background colors. Keys are `0` (Sunday) to `6` (Saturday), e.g. `{\"0\": \"#f14c4c\", \"6\": \"#3794ff\"}`.",
+  "config.theme": "Color theme of the Mark Planner screens.",
+  "config.theme.auto": "Follow the VS Code theme (light or dark)",
+  "config.theme.light": "Always light",
+  "config.theme.dark": "Always dark"
 }

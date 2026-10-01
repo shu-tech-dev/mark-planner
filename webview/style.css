@@ -1,7 +1,8 @@
 @import '../node_modules/frappe-gantt/dist/frappe-gantt.css';
 
 /* ==== Design tokens ==================================================== */
-/* Own palette; light/dark follows the VS Code theme kind (body class). */
+/* Own palette. Dark by default; light when the `theme` setting says so, or on
+   `auto` when VS Code uses a light theme (body class set by VS Code). */
 
 :root {
   --mp-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
@@ -29,8 +30,9 @@
   --mp-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--mp-border);
 }
 
-body.vscode-light,
-body.vscode-high-contrast-light {
+body[data-theme='light'],
+body.vscode-light:not([data-theme='dark']),
+body.vscode-high-contrast-light:not([data-theme='dark']) {
   --mp-bg: #ffffff;
   --mp-surface: #fbfbfc;
   --mp-surface-2: #f4f5f7;
@@ -364,7 +366,9 @@ main {
 .fc .mp-ev:hover {
   filter: brightness(1.15);
 }
-body.vscode-light .fc .mp-ev:hover {
+body[data-theme='light'] .fc .mp-ev:hover,
+body.vscode-light:not([data-theme='dark']) .fc .mp-ev:hover,
+body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev:hover {
   filter: brightness(0.96);
 }
 .fc .fc-timegrid-event.mp-ev {

@@ -98,6 +98,8 @@ function renderAppBar() {
 
 function render() {
   applyI18n();
+  // Light/dark palette selection lives in style.css (see "Design tokens").
+  document.body.dataset.theme = state.settings.theme;
   document.querySelectorAll<HTMLElement>('.view').forEach((el) => (el.hidden = el.id !== state.view));
   switch (state.view) {
     case 'calendar':

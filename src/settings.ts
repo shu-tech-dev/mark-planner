@@ -4,6 +4,7 @@ export type Lang = 'ja' | 'en';
 export type LanguageSetting = 'auto' | Lang;
 export type CalendarView = 'month' | 'week' | 'day';
 export type GanttViewMode = 'Day' | 'Week' | 'Month';
+export type Theme = 'auto' | 'light' | 'dark';
 
 export interface StatusDef {
   name: string;
@@ -27,6 +28,8 @@ export interface PlannerSettings {
   hideDone: boolean;
   /** Events shown per day cell before collapsing into "+N more"; 0 = no limit (cells grow). */
   maxEventsPerDay: number;
+  /** Color theme of the planner; `auto` follows the VS Code theme kind. */
+  theme: Theme;
   /** Days of week treated as days off, mapped to their color (`"0"` = Sunday … `"6"` = Saturday). */
   weekendColors: Record<string, string>;
   /** Show Japanese public holidays. */
@@ -58,6 +61,7 @@ export const DEFAULT_SETTINGS: PlannerSettings = {
   weekStart: 0,
   hideDone: false,
   maxEventsPerDay: 0,
+  theme: 'auto',
   weekendColors: { '0': '#f14c4c', '6': '#3794ff' },
   showHolidays: true,
   holidayColor: '#f14c4c',
@@ -128,6 +132,7 @@ export function normalizeSettings(raw: Partial<Record<SettingKey, unknown>>): Pl
     maxEventsPerDay: Number.isInteger(raw.maxEventsPerDay) && (raw.maxEventsPerDay as number) >= 0
       ? (raw.maxEventsPerDay as number)
       : d.maxEventsPerDay,
+    theme: oneOf(raw.theme, ['auto', 'light', 'dark'], d.theme),
     weekendColors: isRecord(raw.weekendColors)
       ? Object.fromEntries(
           Object.entries(raw.weekendColors)
