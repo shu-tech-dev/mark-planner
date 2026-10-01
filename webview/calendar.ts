@@ -3,13 +3,12 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import jaLocale from '@fullcalendar/core/locales/ja';
-import { ancestorTitles, parentMap } from '../src/hierarchy';
-import { businessCalendar, remainingBusinessDays, remainingLabel } from '../src/businessDays';
 import { japaneseHoliday, japaneseHolidaysBetween, vacationDays, weekendColor } from '../src/holidays';
 import type { PlannerItem } from '../src/model';
 import { CalendarView as CalendarViewSetting, Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { soft, translucent } from './colors';
 import { addDays, formatDate, formatDateTime, isDateOnly } from './dates';
+import { itemTooltip, tooltip, TooltipContext } from './tooltip';
 import { post } from './vscode';
 
 const VIEW_NAMES: Record<CalendarViewSetting, string> = {
@@ -34,6 +33,8 @@ export class CalendarView {
   private appliedView: CalendarViewSetting | undefined;
   private readonly weekendStyle = document.head.appendChild(document.createElement('style'));
   private lang: Lang = 'ja';
+  private context: TooltipContext | undefined;
+  private byKey = new Map<string, PlannerItem>();
   private showHolidays = true;
 
   constructor(
@@ -77,14 +78,19 @@ export class CalendarView {
       },
       eventDrop: (info) => onChange(info.event),
       eventResize: (info) => onChange(info.event),
-      eventDidMount: (info) => {
-        // Background events (holidays, vacation shading) carry no ancestors.
-        const ancestors: string[] = info.event.extendedProps.ancestors ?? [];
-        const remaining: string | undefined = info.event.extendedProps.remaining;
-        info.el.title =
-          (ancestors.length ? `${[...ancestors].reverse().join(' › ')} › ${info.event.title}` : info.event.title) +
-          (remaining ? `\n${remaining}` : '');
+      eventMouseEnter: (info) => {
+        const item = this.byKey.get(info.event.id);
+        if (item && this.context) {
+          const ctx = this.context;
+          tooltip().hoverStart(info.el, () => itemTooltip(item, ctx, { hint: 'tooltip.openClick' }), {
+            x: info.jsEvent.clientX,
+            y: info.jsEvent.clientY,
+          });
+        }
       },
+      eventMouseLeave: (info) => tooltip().hoverEnd(info.el),
+      eventDragStart: () => tooltip().hide(),
+      eventResizeStart: () => tooltip().hide(),
       dateClick: (info) => post({ type: 'create', date: info.allDay ? info.dateStr : formatDateTime(info.date) }),
       datesSet: (arg) => {
         this.onNav({ title: arg.view.title, range: RANGE_OF[arg.view.type] });
@@ -131,6 +137,8 @@ export class CalendarView {
   update(items: PlannerItem[], settings: PlannerSettings, lang: Lang): void {
     this.lang = lang;
     this.showHolidays = settings.showHolidays;
+    this.context = { items, settings, lang };
+    this.byKey = new Map(items.map((i) => [i.key, i]));
     this.calendar.setOption('locale', lang === 'ja' ? jaLocale : 'en');
     this.calendar.setOption('firstDay', settings.weekStart);
     // 0: day cells grow to fit every event; n: show n, then "+N more".
@@ -168,23 +176,16 @@ export class CalendarView {
       this.calendar.changeView(VIEW_NAMES[settings.calendarView]);
     }
 
-    const parents = parentMap(items);
     const dated = items
       .filter((i) => i.start ?? i.end)
       .filter((i) => i.type === 'holiday' || !(settings.hideDone && resolveStatus(i.status, settings.statuses).done));
-    const cal = businessCalendar(items, settings);
-    const today = formatDate(new Date());
-    const events = dated.map((i) => {
-      const remaining = remainingBusinessDays(i, today, cal, settings);
-      const event = toEvent(i, parents, settings);
-      return remaining ? { ...event, extendedProps: { ...event.extendedProps, remaining: remainingLabel(remaining, lang) } } : event;
-    });
+    const events = dated.map((i) => toEvent(i, settings));
     // Shade the days of each vacation, in addition to its draggable bar.
     const vacationShades = dated
       .filter((i) => i.type === 'holiday')
       .map(
         (i): EventInput => ({
-          ...toEvent(i, parents, settings),
+          ...toEvent(i, settings),
           id: `bg:${i.key}`,
           display: 'background',
           title: '',
@@ -229,7 +230,7 @@ function weekendStyles(settings: PlannerSettings): string {
     .join('\n');
 }
 
-function toEvent(item: PlannerItem, parents: Map<PlannerItem, PlannerItem>, settings: PlannerSettings): EventInput {
+function toEvent(item: PlannerItem, settings: PlannerSettings): EventInput {
   const start = (item.start ?? item.end)!;
   const allDay = isDateOnly(start);
   const deadlineOnly = !item.start;
@@ -257,7 +258,6 @@ function toEvent(item: PlannerItem, parents: Map<PlannerItem, PlannerItem>, sett
     backgroundColor: soft(color),
     borderColor: color,
     classNames,
-    extendedProps: { ancestors: ancestorTitles(item, parents) },
   };
 }
 

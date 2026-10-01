@@ -1,25 +1,17 @@
 import Gantt from 'frappe-gantt';
 import { buildTree, TreeRow } from '../src/hierarchy';
-import { businessCalendar, countBusinessDays, remainingBusinessDays, remainingLabel } from '../src/businessDays';
-import { formatDisplayDate } from '../src/dateFormat';
 import { DayLabel, japaneseHolidaysBetween, vacationDays, weekendColor } from '../src/holidays';
 import { t } from '../src/i18n';
 import type { PlannerItem } from '../src/model';
 import { GanttViewMode, Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { translucent } from './colors';
 import { addDays, formatDate, formatDateTime, isDateOnly } from './dates';
+import { itemTooltip, tooltip } from './tooltip';
 import { post } from './vscode';
 
 const toGanttDate = (date: string) => date.replace('T', ' ');
 
-const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
-interface PopupContext {
-  task: { id: string };
-  set_title(html: string): void;
-  set_subtitle(html: string): void;
-  set_details(html: string): void;
-}
 
 /**
  * frappe-gantt accepts a single class token per bar, so the bar's traits are
@@ -83,14 +75,34 @@ export class GanttView {
   /** Current scale; follows the setting when it changes, otherwise the app bar. */
   private mode: GanttViewMode = 'Day';
   private appliedSettingMode: GanttViewMode | undefined;
-  /** Read by the popup when a bar is clicked. */
+  /** Read by the bar tooltip. */
   private context: { items: PlannerItem[]; settings: PlannerSettings; lang: Lang } | undefined;
   private readonly style = document.head.appendChild(document.createElement('style'));
 
   constructor(
     private readonly chart: HTMLElement,
     private readonly empty: HTMLElement,
-  ) {}
+  ) {
+    // Hover tooltips on bars (shared with the calendar; frappe's popup is off).
+    chart.addEventListener('mouseover', (e) => {
+      const wrapper = (e.target as Element).closest('.bar-wrapper');
+      const row = wrapper && this.rows[Number(wrapper.getAttribute('data-id')?.slice(1))];
+      if (wrapper && row && this.context) {
+        const ctx = this.context;
+        tooltip().hoverStart(
+          wrapper,
+          () => itemTooltip(row.item, ctx, { hint: 'tooltip.openDblClick', span: row }),
+          { x: e.clientX, y: e.clientY },
+        );
+      }
+    });
+    chart.addEventListener('mouseout', (e) => {
+      const wrapper = (e.target as Element).closest('.bar-wrapper');
+      if (wrapper && !wrapper.contains(e.relatedTarget as Node)) {
+        tooltip().hoverEnd(wrapper);
+      }
+    });
+  }
 
   update(items: PlannerItem[], settings: PlannerSettings, lang: Lang): void {
     this.style.textContent = statusStyles(settings);
@@ -111,7 +123,6 @@ export class GanttView {
       return {
         id: `t${i}`,
         name: row.depth > 0 ? `${'　'.repeat(row.depth - 1)}└ ${item.title}` : item.title,
-        description: row.derived ? `${item.path}${t(lang, 'gantt.derived')}` : item.path,
         start: toGanttDate(row.start),
         end: toGanttDate(row.end),
         progress: status.progress,
@@ -153,7 +164,7 @@ export class GanttView {
       bar_corner_radius: 6,
       padding: 20,
       arrow_curve: 6,
-      popup: (ctx: PopupContext) => this.popup(ctx),
+      popup: false,
       on_double_click: (task: { id: string }) => {
         post({ type: 'open', key: this.rowOf(task).item.key });
       },
@@ -181,25 +192,6 @@ export class GanttView {
 
   today(): void {
     this.gantt?.scroll_current();
-  }
-
-  /** Bar popup: dates in the configured format, span and remaining business days. */
-  private popup(ctx: PopupContext): void {
-    const row = this.rowOf(ctx.task);
-    const { items, settings, lang } = this.context!;
-    const cal = businessCalendar(items, settings);
-    const date = (v: string) => formatDisplayDate(v, settings.dateFormat, lang);
-    const lines = [
-      row.start === row.end ? date(row.start) : `${date(row.start)} – ${date(row.end)}`,
-      t(lang, 'gantt.businessDays', countBusinessDays(row.start.slice(0, 10), row.end.slice(0, 10), cal)),
-    ];
-    const remaining = remainingBusinessDays(row.item, formatDate(new Date()), cal, settings);
-    if (remaining) {
-      lines.push(`<span class="remaining ${remaining.kind}">${escapeHtml(remainingLabel(remaining, lang))}</span>`);
-    }
-    ctx.set_title(escapeHtml(row.item.title));
-    ctx.set_subtitle(escapeHtml(row.derived ? `${row.item.path}${t(lang, 'gantt.derived')}` : row.item.path));
-    ctx.set_details(lines.join('<br>'));
   }
 
   private rowOf(task: { id: string }): TreeRow {

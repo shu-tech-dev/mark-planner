@@ -504,6 +504,12 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev:hover {
   font-size: 11px;
   color: var(--mp-text-muted);
 }
+/* Hovered bar's date range in the header: a soft band that keeps the dates readable. */
+.gantt-container .date-range-highlight {
+  background: var(--mp-accent-soft);
+  border-radius: 6px;
+  z-index: 0;
+}
 .gantt-container .current-date-highlight {
   background: var(--mp-accent);
   color: var(--mp-accent-text);
@@ -538,15 +544,9 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev:hover {
 .gantt .bar-wrapper[class*='_d-1_'] .bar-progress {
   display: none;
 }
-/* frappe-gantt leaves an empty popup box at the top-left until the first click. */
-.gantt-container .popup-wrapper:empty {
-  display: none;
-}
+/* The bar popup is replaced by the shared tooltip. */
 .gantt-container .popup-wrapper {
-  border-radius: var(--mp-radius);
-  background: var(--mp-surface);
-  color: var(--mp-text);
-  box-shadow: var(--mp-shadow);
+  display: none;
 }
 .gantt-container .holiday-label {
   color: var(--mp-text);
@@ -1300,4 +1300,124 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev:hover {
   height: 26px;
   padding: 0 8px;
   font-size: 12px;
+}
+
+/* ==== Tooltip (shared by calendar and Gantt) =========================== */
+
+.mp-tooltip {
+  position: fixed;
+  z-index: 200;
+  max-width: 320px;
+  min-width: 220px;
+  padding: 12px 14px;
+  border-radius: var(--mp-radius-lg);
+  background: var(--mp-surface);
+  box-shadow: var(--mp-shadow);
+  font-size: 12px;
+  line-height: 1.5;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+.mp-tooltip.visible {
+  opacity: 1;
+  transform: none;
+}
+.tt-crumbs {
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--mp-text-faint);
+}
+.tt-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  word-break: break-word;
+}
+.tt-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--c);
+  transform: translateY(-1px);
+}
+.tt-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+.tt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  background: var(--mp-surface-2);
+  color: var(--mp-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+.tt-chip.tt-status {
+  background: color-mix(in srgb, var(--c) 16%, transparent);
+  color: var(--mp-text);
+}
+.tt-chip .tt-dot {
+  width: 6px;
+  height: 6px;
+  transform: none;
+}
+.tt-rows {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+}
+.tt-rows dt {
+  color: var(--mp-text-faint);
+}
+.tt-rows dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.tt-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+.tt-tag {
+  padding: 1px 7px;
+  border-radius: 5px;
+  background: var(--mp-accent-soft);
+  color: var(--mp-accent);
+  font-size: 11px;
+}
+.tt-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--mp-border-subtle);
+  font-size: 11px;
+  color: var(--mp-text-faint);
+}
+.tt-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.tt-hint {
+  flex: none;
 }
