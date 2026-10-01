@@ -11,8 +11,9 @@ test('normalizeDate', () => {
   assert.equal(normalizeDate('tomorrow'), undefined);
 });
 
-test('toPlannerItem requires a date and falls back to file name', () => {
+test('toPlannerItem requires a date or an id and falls back to file name', () => {
   assert.equal(toPlannerItem({ title: 'x' }, 'k', 'a.md'), undefined);
+  assert.equal(toPlannerItem({ id: 'p1', title: 'epic' }, 'k', 'a.md')?.start, undefined);
   const item = toPlannerItem({ end: '2026-10-06', depends: 'abc' }, 'k', 'dir/2026-10-06-foo.md');
   assert.equal(item?.title, '2026-10-06-foo');
   assert.equal(item?.type, 'task');

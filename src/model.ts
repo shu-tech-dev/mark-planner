@@ -81,7 +81,10 @@ function asStringList(value: unknown): string[] {
   return single ? [single] : [];
 }
 
-/** Returns undefined when the frontmatter has no usable start/end date. */
+/**
+ * Returns undefined unless the frontmatter has a usable date or an ID
+ * (undated items with an ID can still act as parents).
+ */
 export function toPlannerItem(
   data: Record<string, unknown>,
   key: string,
@@ -90,13 +93,14 @@ export function toPlannerItem(
 ): PlannerItem | undefined {
   const start = normalizeDate(data[props.start]);
   const end = normalizeDate(data[props.end]);
-  if (!start && !end) {
+  const id = asString(data[props.id]);
+  if (!start && !end && !id) {
     return undefined;
   }
   const fileTitle = path.split('/').pop()!.replace(/\.md$/i, '');
   return {
     key,
-    id: asString(data[props.id]),
+    id,
     title: asString(data[props.title]) ?? fileTitle,
     type: asString(data[props.type]) === 'event' ? 'event' : 'task',
     status: asString(data[props.status]) ?? 'todo',

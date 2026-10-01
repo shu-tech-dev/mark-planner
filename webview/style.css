@@ -88,4 +88,8 @@ main { flex: 1; min-height: 0; padding: 12px; }
 }
 .gantt .bar-wrapper[class*="type-event--"] .bar { fill: var(--vscode-charts-purple); }
 .gantt .bar-wrapper[class*="--status-done"] { opacity: 0.5; }
+.gantt .bar-wrapper[class*="--parent"] .bar { fill: var(--vscode-charts-foreground, #888); }
+.gantt .bar-wrapper[class*="--parent"] .bar-label { font-weight: bold; }
+.gantt .bar-wrapper[class*="--derived"] .bar { fill-opacity: 0.6; stroke: var(--vscode-foreground); stroke-dasharray: 4 2; }
+.gantt .bar-wrapper[class*="--derived"] .bar-progress { display: none; }
 .gantt-container .popup-wrapper { background: var(--vscode-editorWidget-background); color: var(--vscode-foreground); }

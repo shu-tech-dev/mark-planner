@@ -5,6 +5,7 @@ import interactionPlugin from '@fullcalendar/interaction';
 import jaLocale from '@fullcalendar/core/locales/ja';
 import Gantt from 'frappe-gantt';
 import './style.css';
+import { ancestorTitles, buildTree, parentMap, TreeRow } from '../src/hierarchy';
 import type { PlannerItem } from '../src/model';
 
 declare function acquireVsCodeApi(): { postMessage(message: unknown): void };
@@ -31,7 +32,7 @@ function statusClass(item: PlannerItem): string[] {
 
 // ---- calendar ----
 
-function toCalendarEvent(item: PlannerItem): EventInput {
+function toCalendarEvent(item: PlannerItem, parents: Map<PlannerItem, PlannerItem>): EventInput {
   const start = (item.start ?? item.end)!;
   const allDay = isDateOnly(start);
   const deadlineOnly = !item.start;
@@ -48,6 +49,7 @@ function toCalendarEvent(item: PlannerItem): EventInput {
     allDay,
     durationEditable: !deadlineOnly,
     classNames: statusClass(item),
+    extendedProps: { ancestors: ancestorTitles(item, parents) },
   };
 }
 
@@ -78,43 +80,57 @@ const calendar = new Calendar(document.getElementById('calendar')!, {
   eventClick: (info) => vscode.postMessage({ type: 'open', key: info.event.id }),
   eventDrop: (info) => onCalendarChange(info.event),
   eventResize: (info) => onCalendarChange(info.event),
+  eventDidMount: (info) => {
+    const ancestors: string[] = info.event.extendedProps.ancestors;
+    info.el.title = ancestors.length ? `${[...ancestors].reverse().join(' › ')} › ${info.event.title}` : info.event.title;
+  },
   dateClick: (info) => vscode.postMessage({ type: 'create', date: info.allDay ? info.dateStr : formatDateTime(info.date) }),
 });
 
 function renderCalendar() {
   calendar.removeAllEvents();
-  calendar.addEventSource(items.map(toCalendarEvent));
+  const parents = parentMap(items);
+  calendar.addEventSource(items.filter((i) => i.start ?? i.end).map((i) => toCalendarEvent(i, parents)));
   calendar.updateSize();
 }
 
 // ---- gantt ----
 
 let gantt: Gantt | undefined;
-// frappe-gantt uses task ids in CSS selectors, so map items to safe ids.
-let ganttKeys: string[] = [];
+// frappe-gantt uses task ids in CSS selectors, so rows are addressed as `t<index>`.
+let ganttRows: TreeRow[] = [];
+let ganttTasks: unknown[] = [];
+
+const rowOf = (task: { id: string }) => ganttRows[Number(task.id.slice(1))];
 
 function toGanttDate(date: string): string {
   return date.replace('T', ' ');
 }
 
 function renderGantt() {
-  const sorted = [...items].sort((a, b) => (a.start ?? a.end)!.localeCompare((b.start ?? b.end)!));
-  ganttKeys = sorted.map((i) => i.key);
-  const indexById = new Map(sorted.flatMap((item, i) => (item.id ? [[item.id, i] as const] : [])));
+  const rows = buildTree(items);
+  ganttRows = rows;
+  const indexById = new Map(rows.flatMap((row, i) => (row.item.id ? [[row.item.id, i] as const] : [])));
 
-  const tasks = sorted.map((item, i) => {
-    const start = (item.start ?? item.end)!;
-    const end = item.end ?? start;
+  const tasks = rows.map((row, i) => {
+    const { item } = row;
+    const classes = statusClass(item);
+    if (row.hasChildren) {
+      classes.push('parent');
+    }
+    if (row.derived) {
+      classes.push('derived');
+    }
     return {
       id: `t${i}`,
-      name: item.title,
-      description: item.path,
-      start: toGanttDate(start),
-      end: toGanttDate(end < start ? start : end),
+      name: row.depth > 0 ? `${'\u3000'.repeat(row.depth - 1)}└ ${item.title}` : item.title,
+      description: row.derived ? `${item.path}（期間は子タスクから算出）` : item.path,
+      start: toGanttDate(row.start),
+      end: toGanttDate(row.end),
       progress: item.status === 'done' ? 100 : item.status === 'doing' ? 50 : 0,
       dependencies: item.depends.flatMap((id) => (indexById.has(id) ? [`t${indexById.get(id)}`] : [])).join(','),
       // frappe-gantt accepts a single class token only.
-      custom_class: statusClass(item).join('--'),
+      custom_class: classes.join('--'),
     };
   });
 
@@ -125,6 +141,7 @@ function renderGantt() {
     gantt = undefined;
     return;
   }
+  ganttTasks = tasks;
   if (gantt) {
     gantt.refresh(tasks);
     return;
@@ -135,17 +152,17 @@ function renderGantt() {
     view_mode_select: true,
     readonly_progress: true,
     on_double_click: (task: { id: string }) => {
-      vscode.postMessage({ type: 'open', key: ganttKeys[Number(task.id.slice(1))] });
+      vscode.postMessage({ type: 'open', key: rowOf(task).item.key });
     },
     on_date_change: (task: { id: string }, start: Date, end: Date) => {
-      const key = ganttKeys[Number(task.id.slice(1))];
-      const item = items.find((i) => i.key === key);
-      if (!item) {
+      const row = rowOf(task);
+      if (row.derived) {
+        // The span comes from the children; snap the bar back.
+        setTimeout(() => gantt?.refresh(ganttTasks));
         return;
       }
-      const timed = !isDateOnly((item.start ?? item.end)!);
-      const fmt = timed ? formatDateTime : formatDate;
-      vscode.postMessage({ type: 'move', key, start: fmt(start), end: fmt(end) });
+      const fmt = isDateOnly(row.start) ? formatDate : formatDateTime;
+      vscode.postMessage({ type: 'move', key: row.item.key, start: fmt(start), end: fmt(end) });
     },
   });
 }
