@@ -95,6 +95,39 @@ export async function createItem(store: PlannerStore, date?: string): Promise<vo
   await vscode.window.showTextDocument(uri);
 }
 
+/**
+ * Creates an undated task straight from the table (no prompts): it shows up in
+ * the table and can be given dates or a parent there.
+ */
+export async function createQuickTask(store: PlannerStore, title: string, parentId?: string): Promise<void> {
+  const root = vscode.workspace.workspaceFolders?.[0];
+  if (!root || !title.trim()) {
+    return;
+  }
+  const config = getConfig();
+  const { newItemFolder, properties: p } = config;
+  const folder = vscode.Uri.joinPath(root.uri, newItemFolder);
+  await vscode.workspace.fs.createDirectory(folder);
+  const id = generateId(store.takenIds());
+  const fileName = await uniqueFileName(baseFileName(id, title), (name) => exists(vscode.Uri.joinPath(folder, name)));
+  const data: Record<string, unknown> = {
+    [p.id]: id,
+    [p.title]: title.trim(),
+    [p.type]: 'task',
+    [p.status]: config.statuses[0].name,
+    ...(parentId ? { [p.parent]: parentId } : {}),
+    [p.tags]: [],
+  };
+  for (const [key, value] of Object.entries(config['template.frontmatter'])) {
+    if (!(key in data) || key === p.tags) {
+      data[key] = value;
+    }
+  }
+  const body = renderTemplate(config['template.body'], { title: title.trim(), date: '' });
+  const text = createFrontmatterFile(data, body ? `\n${body}${body.endsWith('\n') ? '' : '\n'}` : '\n');
+  await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(folder, fileName), encoder.encode(text));
+}
+
 /** Keeps `<id>-<title>.md` file names in sync after an ID change. */
 async function renameIdPrefix(uri: vscode.Uri, oldId: string, newId: string): Promise<void> {
   const name = uri.path.split('/').pop()!;

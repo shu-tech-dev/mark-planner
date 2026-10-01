@@ -40,5 +40,6 @@
   "config.theme": "Color theme of the Mark Planner screens.",
   "config.theme.auto": "Follow the VS Code theme (light or dark)",
   "config.theme.light": "Always light",
-  "config.theme.dark": "Always dark"
+  "config.theme.dark": "Always dark",
+  "command.openTable": "Open Table"
 }

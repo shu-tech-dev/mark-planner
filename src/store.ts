@@ -12,7 +12,7 @@ export class PlannerStore implements vscode.Disposable {
   /** Order in which files appeared after the initial scan (0 = present at scan). */
   private readonly createdSeq = new Map<string, number>();
   private nextSeq = 1;
-  private watcher: vscode.FileSystemWatcher | undefined;
+  private watchers: vscode.FileSystemWatcher[] = [];
   private readonly disposables: vscode.Disposable[] = [];
   private readonly changeEmitter = new vscode.EventEmitter<void>();
   private changeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -64,18 +64,23 @@ export class PlannerStore implements vscode.Disposable {
 
   async reload(): Promise<void> {
     const { include, exclude } = getConfig();
-    this.watcher?.dispose();
-    this.watcher = vscode.workspace.createFileSystemWatcher(include);
-    this.watcher.onDidCreate((uri) => {
-      this.createdSeq.set(uri.toString(), this.nextSeq++);
-      void this.refreshFile(uri);
-    });
-    this.watcher.onDidChange((uri) => this.refreshFile(uri));
-    this.watcher.onDidDelete((uri) => {
-      this.createdSeq.delete(uri.toString());
-      if (this.items.delete(uri.toString())) {
-        this.fireChange();
-      }
+    this.watchers.forEach((w) => w.dispose());
+    // A plain string glob would be matched against absolute paths, so patterns like
+    // `planner/**/*.md` need to be relative to each workspace folder (as findFiles does).
+    this.watchers = (vscode.workspace.workspaceFolders ?? []).map((folder) => {
+      const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(folder, include));
+      watcher.onDidCreate((uri) => {
+        this.createdSeq.set(uri.toString(), this.nextSeq++);
+        void this.refreshFile(uri);
+      });
+      watcher.onDidChange((uri) => this.refreshFile(uri));
+      watcher.onDidDelete((uri) => {
+        this.createdSeq.delete(uri.toString());
+        if (this.items.delete(uri.toString())) {
+          this.fireChange();
+        }
+      });
+      return watcher;
     });
 
     const uris = await vscode.workspace.findFiles(include, exclude);
@@ -97,14 +102,13 @@ export class PlannerStore implements vscode.Disposable {
   }
 
   dispose(): void {
-    this.watcher?.dispose();
+    this.watchers.forEach((w) => w.dispose());
     clearTimeout(this.changeTimer);
     this.disposables.forEach((d) => d.dispose());
   }
 
   private async refreshFile(uri: vscode.Uri): Promise<void> {
-    const { exclude } = getConfig();
-    if (exclude && vscode.languages.match({ pattern: exclude }, { uri } as vscode.TextDocument)) {
+    if (isExcluded(uri, getConfig().exclude)) {
       return;
     }
     await this.readFile(uri);
@@ -133,6 +137,20 @@ export class PlannerStore implements vscode.Disposable {
     clearTimeout(this.changeTimer);
     this.changeTimer = setTimeout(() => this.changeEmitter.fire(), 100);
   }
+}
+
+/** Matches the exclude glob relative to the file's workspace folder, like findFiles. */
+function isExcluded(uri: vscode.Uri, exclude: string): boolean {
+  const folder = vscode.workspace.getWorkspaceFolder(uri);
+  if (!exclude || !folder) {
+    return false;
+  }
+  return (
+    vscode.languages.match({ pattern: new vscode.RelativePattern(folder, exclude) }, {
+      uri,
+      languageId: '',
+    } as unknown as vscode.TextDocument) > 0
+  );
 }
 
 /**

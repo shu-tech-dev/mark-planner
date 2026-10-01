@@ -1,6 +1,8 @@
 import * as assert from 'node:assert/strict';
 import * as vscode from 'vscode';
+import { createQuickTask } from '../../src/commands';
 import { getConfig, updateSetting } from '../../src/config';
+import { cellPatch } from '../../src/table';
 import type { PlannerStore } from '../../src/store';
 
 async function waitFor(check: () => boolean, label: string) {
@@ -79,4 +81,38 @@ export async function run(): Promise<void> {
 
   await vscode.commands.executeCommand('markPlanner.openSettings');
   console.log('ok: settings panel opens');
+
+  // Table: quick-created undated task is indexed; cell edits write frontmatter.
+  await createQuickTask(store, 'バックログ項目');
+  await waitFor(() => store.getItems().some((i) => i.title === 'バックログ項目'), 'quick task indexed');
+  const backlog = store.getItems().find((i) => i.title === 'バックログ項目')!;
+  assert.equal(backlog.start, undefined);
+  assert.equal(backlog.status, '未着手'); // first configured status (set above)
+  assert.match(backlog.path, new RegExp(`^planner/${backlog.id}-バックログ項目\\.md$`));
+  console.log('ok: quick-created undated task');
+
+  await store.patch(backlog.key, cellPatch('tags', 'a, b', getConfig().properties)!);
+  await store.patch(backlog.key, cellPatch('start', '2026-11-02', getConfig().properties)!);
+  await waitFor(() => store.get(backlog.key)?.start === '2026-11-02', 'cell edits indexed');
+  assert.deepEqual(store.get(backlog.key)?.tags, ['a', 'b']);
+  console.log('ok: cell edits written to frontmatter');
+
+  await vscode.commands.executeCommand('markPlanner.openTable');
+  console.log('ok: table panel opens');
+
+  // Relative exclude globs apply to watcher events too.
+  await vscode.workspace.getConfiguration('markPlanner').update('exclude', 'planner/skip/**', vscode.ConfigurationTarget.Workspace);
+  await waitFor(() => store.getItems().length > 0, 'reload after exclude change');
+  await vscode.workspace.fs.writeFile(
+    vscode.Uri.joinPath(root, 'planner/skip/x.md'),
+    new TextEncoder().encode('---\nid: skip01\ntitle: skipped\nstart: 2026-10-01\n---\n'),
+  );
+  await vscode.workspace.fs.writeFile(
+    vscode.Uri.joinPath(root, 'planner/kept.md'),
+    new TextEncoder().encode('---\nid: kept01\ntitle: kept\nstart: 2026-10-01\n---\n'),
+  );
+  await waitFor(() => store.getItems().some((i) => i.title === 'kept'), 'kept file indexed');
+  await new Promise((r) => setTimeout(r, 500));
+  assert.equal(store.getItems().some((i) => i.title === 'skipped'), false);
+  console.log('ok: relative include/exclude globs apply to new files');
 }

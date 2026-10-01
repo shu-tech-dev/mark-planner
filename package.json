@@ -23,6 +23,11 @@
         "category": "Mark Planner"
       },
       {
+        "command": "markPlanner.openTable",
+        "title": "%command.openTable%",
+        "category": "Mark Planner"
+      },
+      {
         "command": "markPlanner.openSettings",
         "title": "%command.openSettings%",
         "category": "Mark Planner"

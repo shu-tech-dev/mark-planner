@@ -40,5 +40,6 @@
   "config.theme": "Mark Planner の画面のテーマ。",
   "config.theme.auto": "VS Code のテーマ（ライト／ダーク）に合わせる",
   "config.theme.light": "常にライト",
-  "config.theme.dark": "常にダーク"
+  "config.theme.dark": "常にダーク",
+  "command.openTable": "テーブルを開く"
 }

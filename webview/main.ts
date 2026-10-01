@@ -7,13 +7,15 @@ import { formatDate } from './dates';
 import { GanttView } from './gantt';
 import { renderIcons } from './icons';
 import { SettingsView } from './settings';
+import { TableView } from './table';
 import { post } from './vscode';
 
-type View = 'calendar' | 'gantt' | 'settings';
+type View = 'calendar' | 'gantt' | 'table' | 'settings';
 
 type ExtensionMessage =
   | { type: 'items'; items: PlannerItem[] }
   | { type: 'view'; view: View }
+  | { type: 'tableState'; state: unknown }
   | {
       type: 'config';
       settings: PlannerSettings;
@@ -40,6 +42,7 @@ const calendar = new CalendarView($('calendar'), (nav) => {
 });
 const gantt = new GanttView($('gantt-chart'), $('gantt-empty'));
 const settings = new SettingsView($('settings'));
+const table = new TableView($('table'));
 
 function applyI18n() {
   document.documentElement.lang = state.lang;
@@ -108,6 +111,9 @@ function render() {
     case 'gantt':
       gantt.update(state.items, state.settings, state.lang);
       break;
+    case 'table':
+      table.update(state.items, state.settings, state.lang);
+      break;
     case 'settings':
       settings.update(state.settings, state.defaults, state.lang, state.target);
       break;
@@ -136,6 +142,9 @@ window.addEventListener('message', (e: MessageEvent<ExtensionMessage>) => {
       break;
     case 'view':
       state.view = message.view;
+      break;
+    case 'tableState':
+      table.setState(message.state);
       break;
     case 'config':
       state.settings = message.settings;

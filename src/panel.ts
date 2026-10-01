@@ -1,19 +1,25 @@
 import * as vscode from 'vscode';
-import { createItem } from './commands';
+import { createItem, createQuickTask } from './commands';
 import { getConfig, getLang, isSettingKey, settingsTarget, updateSetting } from './config';
 import { t } from './i18n';
 import { moveToPatch } from './model';
 import { DEFAULT_SETTINGS } from './settings';
 import { PlannerStore } from './store';
+import { cellPatch } from './table';
 
-export type PlannerView = 'calendar' | 'gantt' | 'settings';
+export type PlannerView = 'calendar' | 'gantt' | 'table' | 'settings';
+
+const TABLE_STATE_KEY = 'markPlanner.tableState';
 
 type WebviewMessage =
   | { type: 'ready' }
   | { type: 'open'; key: string }
   | { type: 'move'; key: string; start: string; end?: string }
   | { type: 'create'; date: string }
-  | { type: 'updateSetting'; key: string; value: unknown };
+  | { type: 'updateSetting'; key: string; value: unknown }
+  | { type: 'patch'; key: string; field: string; value: unknown }
+  | { type: 'createQuick'; title: string; parent?: string }
+  | { type: 'saveTableState'; state: unknown };
 
 export class PlannerPanel {
   private static current: PlannerPanel | undefined;
@@ -78,6 +84,10 @@ export class PlannerPanel {
   private async onMessage(message: WebviewMessage): Promise<void> {
     switch (message.type) {
       case 'ready':
+        void this.panel.webview.postMessage({
+          type: 'tableState',
+          state: this.context.workspaceState.get(TABLE_STATE_KEY),
+        });
         this.postConfig();
         this.setView(this.view);
         this.postItems();
@@ -100,6 +110,27 @@ export class PlannerPanel {
       }
       case 'create':
         await createItem(this.store, message.date);
+        break;
+      case 'patch': {
+        const patch = cellPatch(message.field, message.value, getConfig().properties);
+        if (patch && this.store.get(message.key)) {
+          try {
+            await this.store.patch(message.key, patch);
+          } catch (e) {
+            void vscode.window.showErrorMessage(t(getLang(), 'msg.writeFailed', String(e)));
+            this.postItems();
+          }
+        } else {
+          // Invalid edit: re-send items so the cell shows the stored value again.
+          this.postItems();
+        }
+        break;
+      }
+      case 'createQuick':
+        await createQuickTask(this.store, message.title, message.parent);
+        break;
+      case 'saveTableState':
+        await this.context.workspaceState.update(TABLE_STATE_KEY, message.state);
         break;
       case 'updateSetting':
         // Only keys declared by this extension can be written from the webview.
@@ -135,6 +166,7 @@ export class PlannerPanel {
     <div class="segmented" role="tablist">
       <button data-view="calendar" role="tab"><span data-icon="calendar"></span><span data-i18n="tab.calendar"></span></button>
       <button data-view="gantt" role="tab"><span data-icon="gantt"></span><span data-i18n="tab.gantt"></span></button>
+      <button data-view="table" role="tab"><span data-icon="table"></span><span data-i18n="tab.table"></span></button>
     </div>
   </div>
   <div class="appbar-group nav">
@@ -154,6 +186,7 @@ export class PlannerPanel {
 <main>
   <div id="calendar" class="view"></div>
   <div id="gantt" class="view"><div id="gantt-chart"></div><p id="gantt-empty" class="empty" data-i18n="gantt.empty"></p></div>
+  <div id="table" class="view"></div>
   <div id="settings" class="view"></div>
 </main>
 <script nonce="${nonce}" src="${media('webview.js')}"></script>
