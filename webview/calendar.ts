@@ -22,7 +22,7 @@ export class CalendarView {
   private appliedView: CalendarViewSetting | undefined;
   private readonly weekendStyle = document.head.appendChild(document.createElement('style'));
 
-  constructor(el: HTMLElement) {
+  constructor(private readonly el: HTMLElement) {
     this.calendar = new Calendar(el, {
       plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
       initialView: VIEW_NAMES.month,
@@ -46,8 +46,27 @@ export class CalendarView {
           : info.event.title;
       },
       dateClick: (info) => post({ type: 'create', date: info.allDay ? info.dateStr : formatDateTime(info.date) }),
+      // Re-measure after view/month changes (row count, header).
+      datesSet: () => requestAnimationFrame(() => this.fitRows()),
     });
     this.calendar.render();
+    new ResizeObserver(() => this.fitRows()).observe(el);
+  }
+
+  /**
+   * Month view: a week row may grow to fit its events, but never shrinks below
+   * its share of the panel height (the overflow scrolls instead).
+   */
+  private fitRows(): void {
+    const harness = this.el.querySelector<HTMLElement>('.fc-view-harness');
+    const header = this.el.querySelector<HTMLElement>('.fc-dayGridMonth-view .fc-scrollgrid-section-header');
+    const rows = this.el.querySelectorAll('.fc-dayGridMonth-view .fc-daygrid-body tbody tr').length;
+    if (!harness || !header || !rows) {
+      return;
+    }
+    // Leave room for the grid borders so a calm month doesn't show a scrollbar.
+    const share = Math.floor((harness.clientHeight - header.offsetHeight - 1) / rows);
+    this.el.style.setProperty('--mp-week-row-min', `${Math.max(share, 0)}px`);
   }
 
   update(items: PlannerItem[], settings: PlannerSettings, lang: Lang): void {
@@ -125,6 +144,7 @@ export class CalendarView {
       });
     }
     this.calendar.updateSize();
+    this.fitRows();
   }
 }
 

@@ -57,6 +57,8 @@ main { flex: 1; min-height: 0; padding: 12px; }
   --fc-list-event-hover-bg-color: var(--vscode-list-hoverBackground);
 }
 .fc a { color: inherit; }
+/* Table rows treat height as a minimum: busy weeks grow, others keep their share. */
+.fc .fc-dayGridMonth-view .fc-daygrid-body tbody tr { height: var(--mp-week-row-min, auto); }
 .fc .fc-daygrid-day-frame { cursor: pointer; }
 .fc .fc-popover { background: var(--vscode-editorWidget-background); }
 
