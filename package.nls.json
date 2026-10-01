@@ -31,5 +31,9 @@
   "weekday.3": "Wednesday",
   "weekday.4": "Thursday",
   "weekday.5": "Friday",
-  "weekday.6": "Saturday"
+  "weekday.6": "Saturday",
+  "config.weekendDays": "Days of the week treated as days off (0 = Sunday, 6 = Saturday).",
+  "config.showHolidays": "Show Japanese public holidays.",
+  "config.holidayColor": "Color of public holidays.",
+  "config.vacationColor": "Color of your vacation days (type: holiday)."
 }

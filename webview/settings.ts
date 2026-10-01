@@ -107,6 +107,14 @@ export class SettingsView {
           this.checkboxField('hideDone', 'settings.hideDone'),
         ),
         this.section(
+          'settings.section.holidays',
+          h('p', { class: 'help' }, this.tr('settings.holidays.help')),
+          this.weekdaysField('weekendDays', 'settings.weekendDays'),
+          this.checkboxField('showHolidays', 'settings.showHolidays'),
+          this.colorField('holidayColor', 'settings.holidayColor'),
+          this.colorField('vacationColor', 'settings.vacationColor'),
+        ),
+        this.section(
           'settings.section.language',
           this.selectField('language', 'settings.language', [
             ['auto', this.tr('settings.language.auto')],
@@ -216,6 +224,36 @@ export class SettingsView {
     input.addEventListener('change', () => save(key, input.checked));
     this.bind(key, input, (s) => (input.checked = s[key] === true));
     return this.row(key, label, input);
+  }
+
+  /** Seven checkboxes, starting from the configured first day of the week. */
+  private weekdaysField(key: SettingKey, label: MessageKey) {
+    const boxes = new Map<number, HTMLInputElement>();
+    const group = h('div', { class: 'weekdays', role: 'group' });
+    const order = (first: number) => [0, 1, 2, 3, 4, 5, 6].map((i) => (first + i) % 7);
+    const layout = (first: number) =>
+      group.replaceChildren(
+        ...order(first).map((d) => h('label', {}, boxes.get(d)!, this.tr(`weekday.${d}` as MessageKey))),
+      );
+    for (let d = 0; d < 7; d++) {
+      const box = h('input', { type: 'checkbox', value: String(d) });
+      box.addEventListener('change', () =>
+        save(
+          key,
+          [...boxes].filter(([, b]) => b.checked).map(([day]) => day),
+        ),
+      );
+      boxes.set(d, box);
+    }
+    layout(0);
+    this.bind(key, group, (s) => {
+      layout(s.weekStart);
+      const days = s[key] as number[];
+      for (const [d, box] of boxes) {
+        box.checked = days.includes(d);
+      }
+    });
+    return this.row(key, label, group);
   }
 
   /** One input per frontmatter key; only non-default names are stored. */

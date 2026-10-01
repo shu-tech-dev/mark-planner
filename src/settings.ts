@@ -25,6 +25,12 @@ export interface PlannerSettings {
   ganttViewMode: GanttViewMode;
   weekStart: number;
   hideDone: boolean;
+  /** Days of week treated as non-working (0 = Sunday). */
+  weekendDays: number[];
+  /** Show Japanese public holidays. */
+  showHolidays: boolean;
+  holidayColor: string;
+  vacationColor: string;
   'template.body': string;
   'template.frontmatter': Record<string, unknown>;
   language: LanguageSetting;
@@ -49,6 +55,10 @@ export const DEFAULT_SETTINGS: PlannerSettings = {
   ganttViewMode: 'Day',
   weekStart: 0,
   hideDone: false,
+  weekendDays: [0, 6],
+  showHolidays: true,
+  holidayColor: '#f14c4c',
+  vacationColor: '#2ea043',
   'template.body': '',
   'template.frontmatter': {},
   language: 'auto',
@@ -61,6 +71,7 @@ const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 const str = (v: unknown, fallback: string) => (typeof v === 'string' && v.trim() ? v.trim() : fallback);
 const oneOf = <T extends string>(v: unknown, options: readonly T[], fallback: T): T =>
   options.includes(v as T) ? (v as T) : fallback;
+const color = (v: unknown, fallback: string) => (typeof v === 'string' && COLOR_RE.test(v) ? v : fallback);
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
@@ -106,11 +117,17 @@ export function normalizeSettings(raw: Partial<Record<SettingKey, unknown>>): Pl
     newItemFolder: str(raw.newItemFolder, d.newItemFolder),
     properties,
     statuses: normalizeStatuses(raw.statuses),
-    eventColor: typeof raw.eventColor === 'string' && COLOR_RE.test(raw.eventColor) ? raw.eventColor : d.eventColor,
+    eventColor: color(raw.eventColor, d.eventColor),
     calendarView: oneOf(raw.calendarView, ['month', 'week', 'day'], d.calendarView),
     ganttViewMode: oneOf(raw.ganttViewMode, ['Day', 'Week', 'Month'], d.ganttViewMode),
     weekStart: Number.isInteger(weekStart) && weekStart >= 0 && weekStart <= 6 ? weekStart : d.weekStart,
     hideDone: raw.hideDone === true,
+    weekendDays: Array.isArray(raw.weekendDays)
+      ? [...new Set(raw.weekendDays.filter((d): d is number => Number.isInteger(d) && d >= 0 && d <= 6))].sort()
+      : d.weekendDays,
+    showHolidays: raw.showHolidays !== false,
+    holidayColor: color(raw.holidayColor, d.holidayColor),
+    vacationColor: color(raw.vacationColor, d.vacationColor),
     'template.body': typeof raw['template.body'] === 'string' ? raw['template.body'] : d['template.body'],
     'template.frontmatter': isRecord(raw['template.frontmatter'])
       ? raw['template.frontmatter']

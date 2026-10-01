@@ -225,6 +225,41 @@
           "description": "%config.hideDone%",
           "order": 11
         },
+        "markPlanner.weekendDays": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6
+          },
+          "default": [
+            0,
+            6
+          ],
+          "uniqueItems": true,
+          "description": "%config.weekendDays%",
+          "order": 12
+        },
+        "markPlanner.showHolidays": {
+          "type": "boolean",
+          "default": true,
+          "description": "%config.showHolidays%",
+          "order": 13
+        },
+        "markPlanner.holidayColor": {
+          "type": "string",
+          "format": "color",
+          "default": "#f14c4c",
+          "description": "%config.holidayColor%",
+          "order": 14
+        },
+        "markPlanner.vacationColor": {
+          "type": "string",
+          "format": "color",
+          "default": "#2ea043",
+          "description": "%config.vacationColor%",
+          "order": 15
+        },
         "markPlanner.language": {
           "type": "string",
           "enum": [
@@ -239,7 +274,7 @@
             "日本語",
             "English"
           ],
-          "order": 12
+          "order": 16
         }
       }
     }
@@ -265,6 +300,7 @@
     "@fullcalendar/daygrid": "^6.1.21",
     "@fullcalendar/interaction": "^6.1.21",
     "@fullcalendar/timegrid": "^6.1.21",
+    "@holiday-jp/holiday_jp": "^2.5.2",
     "frappe-gantt": "^1.2.2",
     "yaml": "^2.9.1"
   }

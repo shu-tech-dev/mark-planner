@@ -45,6 +45,7 @@ export async function createItem(store: PlannerStore, date?: string): Promise<vo
     [
       { label: t(lang, 'msg.type.task'), type: 'task' as ItemType },
       { label: t(lang, 'msg.type.event'), type: 'event' as ItemType },
+      { label: t(lang, 'msg.type.holiday'), type: 'holiday' as ItemType },
     ],
     { placeHolder: t(lang, 'msg.typePlaceholder') },
   );

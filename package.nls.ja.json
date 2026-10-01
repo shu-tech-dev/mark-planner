@@ -31,5 +31,9 @@
   "weekday.3": "水曜日",
   "weekday.4": "木曜日",
   "weekday.5": "金曜日",
-  "weekday.6": "土曜日"
+  "weekday.6": "土曜日",
+  "config.weekendDays": "休日として扱う曜日（0 = 日曜, 6 = 土曜）。",
+  "config.showHolidays": "日本の祝日を表示する。",
+  "config.holidayColor": "祝日の色。",
+  "config.vacationColor": "自分の休暇（type: holiday）の色。"
 }

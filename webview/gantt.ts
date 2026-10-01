@@ -1,9 +1,11 @@
 import Gantt from 'frappe-gantt';
 import { buildTree, TreeRow } from '../src/hierarchy';
+import { DayLabel, japaneseHolidaysBetween, vacationDays } from '../src/holidays';
 import { t } from '../src/i18n';
 import type { PlannerItem } from '../src/model';
 import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
-import { formatDate, formatDateTime, isDateOnly } from './dates';
+import { translucent } from './colors';
+import { addDays, formatDate, formatDateTime, isDateOnly } from './dates';
 import { post } from './vscode';
 
 const toGanttDate = (date: string) => date.replace('T', ' ');
@@ -25,6 +27,39 @@ function statusStyles(settings: PlannerSettings): string {
   return rules.join('\n');
 }
 
+/**
+ * frappe-gantt's `holidays` option maps a fill color to the days to shade
+ * (`'weekend'` or `{date, name}` labels shown on hover).
+ */
+function dayShading(items: PlannerItem[], rows: TreeRow[], settings: PlannerSettings, lang: Lang) {
+  const holidays: Record<string, 'weekend' | DayLabel[]> = {};
+  // Keys are colors; pad with spaces so equal colors don't overwrite each other.
+  const add = (color: string, days: 'weekend' | DayLabel[]) => {
+    let key = color;
+    while (key in holidays) {
+      key += ' ';
+    }
+    holidays[key] = days;
+  };
+  if (settings.weekendDays.length) {
+    add('var(--g-weekend-highlight-color)', 'weekend');
+  }
+  if (settings.showHolidays && rows.length) {
+    // The chart pads (and scrolls) beyond the tasks, so cover a generous range.
+    const from = addDays(rows.reduce((m, r) => (r.start < m ? r.start : m), rows[0].start).slice(0, 10), -400);
+    const to = addDays(rows.reduce((m, r) => (r.end > m ? r.end : m), rows[0].end).slice(0, 10), 400);
+    add(translucent(settings.holidayColor), japaneseHolidaysBetween(from, to, lang));
+  }
+  const vacations = vacationDays(items);
+  if (vacations.length) {
+    add(translucent(settings.vacationColor), vacations);
+  }
+  return {
+    holidays,
+    is_weekend: (d: Date) => settings.weekendDays.includes(d.getDay()),
+  };
+}
+
 export class GanttView {
   private gantt: Gantt | undefined;
   private rows: TreeRow[] = [];
@@ -39,10 +74,13 @@ export class GanttView {
 
   update(items: PlannerItem[], settings: PlannerSettings, lang: Lang): void {
     this.style.textContent = statusStyles(settings);
+    // Vacations are shown as shaded days, not as bars.
+    const tasks = items.filter((i) => i.type !== 'holiday');
     const visible = settings.hideDone
-      ? items.filter((i) => !resolveStatus(i.status, settings.statuses).done)
-      : items;
+      ? tasks.filter((i) => !resolveStatus(i.status, settings.statuses).done)
+      : tasks;
     const rows = buildTree(visible);
+    const shading = dayShading(items, rows, settings, lang);
     this.rows = rows;
     const indexById = new Map(rows.flatMap((row, i) => (row.item.id ? [[row.item.id, i] as const] : [])));
 
@@ -73,10 +111,13 @@ export class GanttView {
       return;
     }
     if (this.gantt) {
+      // Shading is read from options on every render.
+      Object.assign(this.gantt.options, shading);
       this.gantt.refresh(this.tasks);
       return;
     }
     this.gantt = new Gantt(this.chart, this.tasks, {
+      ...shading,
       language: lang,
       view_mode: settings.ganttViewMode,
       view_mode_select: true,

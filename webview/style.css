@@ -62,6 +62,20 @@ main { flex: 1; min-height: 0; padding: 12px; }
 
 .fc-event.is-done { opacity: 0.5; text-decoration: line-through; }
 
+/* Days off */
+.fc .mp-weekend { background: var(--vscode-sideBar-background); }
+.fc .mp-holiday .fc-daygrid-day-number,
+.fc .fc-col-header-cell.mp-holiday,
+.fc .mp-holiday .fc-col-header-cell-cushion { color: var(--mp-holiday-color); font-weight: bold; }
+.fc .mp-vacation .fc-daygrid-day-number { font-weight: bold; }
+/* Background colors carry their own alpha (see translucent()). */
+.fc { --fc-bg-event-opacity: 1; }
+.fc .fc-bg-event.mp-holiday-bg .fc-event-title {
+  color: var(--mp-holiday-color);
+  font-style: normal;
+  font-size: 0.85em;
+}
+
 /* ---- frappe-gantt theming ---- */
 .gantt-container {
   --g-bar-color: var(--vscode-charts-blue);
@@ -83,9 +97,10 @@ main { flex: 1; min-height: 0; padding: 12px; }
   --g-actions-background: var(--vscode-button-secondaryBackground);
   background: var(--vscode-editor-background);
 }
-/* Status colors are injected from settings by webview/gantt.ts. */
+/* Status colors are injected from settings by webview/gantt.ts; the doubled
+   class keeps parent styling above those injected rules. */
 .gantt .bar-wrapper[class*="_x-1_"] { opacity: 0.5; }
-.gantt .bar-wrapper[class*="_p-1_"] .bar { fill: var(--vscode-charts-foreground, #888); }
+.gantt .bar-wrapper.bar-wrapper[class*="_p-1_"] .bar { fill: var(--vscode-charts-foreground, #888); }
 .gantt .bar-wrapper[class*="_p-1_"] .bar-label { font-weight: bold; }
 .gantt .bar-wrapper[class*="_d-1_"] .bar { fill-opacity: 0.6; stroke: var(--vscode-foreground); stroke-dasharray: 4 2; }
 .gantt .bar-wrapper[class*="_d-1_"] .bar-progress { display: none; }
@@ -154,6 +169,8 @@ main { flex: 1; min-height: 0; padding: 12px; }
 .settings button:disabled { opacity: 0.4; cursor: default; }
 .settings button.reset, .settings button.icon { padding: 2px 6px; }
 .settings .error { color: var(--vscode-errorForeground); margin: 4px 0; }
+.settings .weekdays { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 3px; }
+.settings .weekdays label { display: inline-flex; align-items: center; gap: 4px; }
 .settings .properties {
   display: grid;
   grid-template-columns: minmax(140px, 220px) 1fr;

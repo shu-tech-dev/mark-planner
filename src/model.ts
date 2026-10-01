@@ -1,4 +1,5 @@
-export type ItemType = 'task' | 'event';
+/** `holiday` marks the user's own days off (vacation). */
+export type ItemType = 'task' | 'event' | 'holiday';
 
 export interface PlannerItem {
   /** File URI string; stable key even when `id` is missing or duplicated. */
@@ -63,6 +64,10 @@ export function isDateOnly(date: string): boolean {
   return date.length === 10;
 }
 
+function toItemType(value: string | undefined): ItemType {
+  return value === 'event' || value === 'holiday' ? value : 'task';
+}
+
 function asString(value: unknown): string | undefined {
   if (typeof value === 'string') {
     return value.trim() || undefined;
@@ -102,7 +107,7 @@ export function toPlannerItem(
     key,
     id,
     title: asString(data[props.title]) ?? fileTitle,
-    type: asString(data[props.type]) === 'event' ? 'event' : 'task',
+    type: toItemType(asString(data[props.type])),
     status: asString(data[props.status]) ?? 'todo',
     start,
     end,
