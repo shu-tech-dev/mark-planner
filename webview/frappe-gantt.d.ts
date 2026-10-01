@@ -3,6 +3,7 @@ declare module 'frappe-gantt' {
     constructor(wrapper: HTMLElement | string, tasks: unknown[], options?: Record<string, unknown>);
     options: Record<string, unknown>;
     refresh(tasks: unknown[]): void;
-    change_view_mode(mode?: string): void;
+    change_view_mode(mode?: string, maintainPosition?: boolean): void;
+    scroll_current(): void;
   }
 }

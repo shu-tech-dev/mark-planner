@@ -129,13 +129,28 @@ export class PlannerPanel {
 <title>Mark Planner</title>
 </head>
 <body>
-<nav class="toolbar">
-  <button data-view="calendar" data-i18n="tab.calendar"></button>
-  <button data-view="gantt" data-i18n="tab.gantt"></button>
-  <span class="spacer"></span>
-  <button id="new-item" data-i18n="button.new"></button>
-  <button data-view="settings" data-i18n="tab.settings"></button>
-</nav>
+<header class="appbar">
+  <div class="appbar-group">
+    <div class="brand"><span class="brand-mark"></span><span class="brand-name">Mark Planner</span></div>
+    <div class="segmented" role="tablist">
+      <button data-view="calendar" role="tab"><span data-icon="calendar"></span><span data-i18n="tab.calendar"></span></button>
+      <button data-view="gantt" role="tab"><span data-icon="gantt"></span><span data-i18n="tab.gantt"></span></button>
+    </div>
+  </div>
+  <div class="appbar-group nav">
+    <button class="btn" id="nav-today" data-i18n="nav.today"></button>
+    <div class="btn-pair">
+      <button class="btn icon" id="nav-prev" data-icon="chevron-left" data-i18n-title="nav.prev"></button>
+      <button class="btn icon" id="nav-next" data-icon="chevron-right" data-i18n-title="nav.next"></button>
+    </div>
+    <h1 id="nav-title"></h1>
+  </div>
+  <div class="appbar-group end">
+    <div class="segmented compact" id="range"></div>
+    <button class="btn primary" id="new-item"><span data-icon="plus"></span><span data-i18n="button.new"></span></button>
+    <button class="btn icon ghost" data-view="settings" data-icon="settings" data-i18n-title="tab.settings"></button>
+  </div>
+</header>
 <main>
   <div id="calendar" class="view"></div>
   <div id="gantt" class="view"><div id="gantt-chart"></div><p id="gantt-empty" class="empty" data-i18n="gantt.empty"></p></div>

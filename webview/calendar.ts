@@ -7,7 +7,7 @@ import { ancestorTitles, parentMap } from '../src/hierarchy';
 import { japaneseHoliday, japaneseHolidaysBetween, vacationDays, weekendColor } from '../src/holidays';
 import type { PlannerItem } from '../src/model';
 import { CalendarView as CalendarViewSetting, Lang, PlannerSettings, resolveStatus } from '../src/settings';
-import { translucent } from './colors';
+import { soft, translucent } from './colors';
 import { addDays, formatDate, formatDateTime, isDateOnly } from './dates';
 import { post } from './vscode';
 
@@ -16,18 +16,56 @@ const VIEW_NAMES: Record<CalendarViewSetting, string> = {
   week: 'timeGridWeek',
   day: 'timeGridDay',
 };
+const RANGE_OF: Record<string, CalendarViewSetting> = {
+  dayGridMonth: 'month',
+  timeGridWeek: 'week',
+  timeGridDay: 'day',
+};
+
+/** Navigation state reported to the app bar. */
+export interface CalendarNav {
+  title: string;
+  range: CalendarViewSetting;
+}
 
 export class CalendarView {
   private readonly calendar: Calendar;
   private appliedView: CalendarViewSetting | undefined;
   private readonly weekendStyle = document.head.appendChild(document.createElement('style'));
+  private lang: Lang = 'ja';
+  private showHolidays = true;
 
-  constructor(private readonly el: HTMLElement) {
+  constructor(
+    private readonly el: HTMLElement,
+    private readonly onNav: (nav: CalendarNav) => void,
+  ) {
     this.calendar = new Calendar(el, {
       plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
       initialView: VIEW_NAMES.month,
-      headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+      // Navigation lives in the app bar (see main.ts).
+      headerToolbar: false,
       height: '100%',
+      views: {
+        dayGridMonth: {
+          // Plain day numbers ("12", not "12日"); the month title carries the context.
+          dayCellContent: (arg) => String(arg.date.getDate()),
+          dayHeaderFormat: { weekday: 'short' },
+        },
+        timeGrid: {
+          // "月 12" with the date as a pill (accent on today) and the holiday name.
+          dayHeaderContent: (arg) => {
+            const holiday = this.showHolidays ? japaneseHoliday(formatDate(arg.date), this.lang) : undefined;
+            const weekday = new Intl.DateTimeFormat(this.lang, { weekday: 'short' }).format(arg.date);
+            return {
+              html:
+                `<span class="mp-dow">${weekday}</span><span class="mp-dnum">${arg.date.getDate()}</span>` +
+                (holiday ? `<span class="mp-hname">${escapeHtml(holiday)}</span>` : ''),
+            };
+          },
+        },
+      },
+      slotLabelFormat: { hour: 'numeric', minute: '2-digit', hour12: false },
+      eventTimeFormat: { hour: 'numeric', minute: '2-digit', hour12: false },
       editable: true,
       // Show timed events as colored bars in month view too, so colors are visible.
       eventDisplay: 'block',
@@ -46,11 +84,30 @@ export class CalendarView {
           : info.event.title;
       },
       dateClick: (info) => post({ type: 'create', date: info.allDay ? info.dateStr : formatDateTime(info.date) }),
-      // Re-measure after view/month changes (row count, header).
-      datesSet: () => requestAnimationFrame(() => this.fitRows()),
+      datesSet: (arg) => {
+        this.onNav({ title: arg.view.title, range: RANGE_OF[arg.view.type] });
+        // Re-measure after view/month changes (row count, header).
+        requestAnimationFrame(() => this.fitRows());
+      },
     });
     this.calendar.render();
     new ResizeObserver(() => this.fitRows()).observe(el);
+  }
+
+  prev(): void {
+    this.calendar.prev();
+  }
+
+  next(): void {
+    this.calendar.next();
+  }
+
+  today(): void {
+    this.calendar.today();
+  }
+
+  setRange(range: CalendarViewSetting): void {
+    this.calendar.changeView(VIEW_NAMES[range]);
   }
 
   /**
@@ -70,6 +127,8 @@ export class CalendarView {
   }
 
   update(items: PlannerItem[], settings: PlannerSettings, lang: Lang): void {
+    this.lang = lang;
+    this.showHolidays = settings.showHolidays;
     this.calendar.setOption('locale', lang === 'ja' ? jaLocale : 'en');
     this.calendar.setOption('firstDay', settings.weekStart);
     // 0: day cells grow to fit every event; n: show n, then "+N more".
@@ -121,7 +180,7 @@ export class CalendarView {
           id: `bg:${i.key}`,
           display: 'background',
           title: '',
-          backgroundColor: translucent(settings.vacationColor),
+          backgroundColor: translucent(settings.vacationColor, '17'),
         }),
       );
 
@@ -137,7 +196,7 @@ export class CalendarView {
               start: h.date,
               allDay: true,
               display: 'background',
-              backgroundColor: translucent(settings.holidayColor),
+              backgroundColor: translucent(settings.holidayColor, '17'),
               classNames: ['mp-holiday-bg'],
             })),
           ),
@@ -148,11 +207,14 @@ export class CalendarView {
   }
 }
 
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
 function weekendStyles(settings: PlannerSettings): string {
   return Object.entries(settings.weekendColors)
     .map(
       ([day, color]) => `
-.fc .mp-wd-${day} { background: ${translucent(color)}; }
+.fc .mp-wd-${day} { background: ${translucent(color, '12')}; }
 .fc .mp-wd-${day} .fc-daygrid-day-number,
 .fc .fc-col-header-cell.mp-wd-${day} .fc-col-header-cell-cushion { color: ${color}; }`,
     )
@@ -172,6 +234,10 @@ function toEvent(item: PlannerItem, parents: Map<PlannerItem, PlannerItem>, sett
   const color =
     item.type === 'event' ? settings.eventColor : item.type === 'holiday' ? settings.vacationColor : status.color;
   const title = item.type === 'holiday' ? `🌴 ${item.title}` : deadlineOnly ? `⏰ ${item.title}` : item.title;
+  const classNames = ['mp-ev'];
+  if (status.done && item.type === 'task') {
+    classNames.push('is-done');
+  }
   return {
     id: item.key,
     title,
@@ -179,9 +245,10 @@ function toEvent(item: PlannerItem, parents: Map<PlannerItem, PlannerItem>, sett
     end,
     allDay,
     durationEditable: !deadlineOnly,
-    backgroundColor: color,
+    // Soft fill + solid left accent line (see .mp-ev in style.css).
+    backgroundColor: soft(color),
     borderColor: color,
-    classNames: status.done && item.type === 'task' ? ['is-done'] : [],
+    classNames,
     extendedProps: { ancestors: ancestorTitles(item, parents) },
   };
 }

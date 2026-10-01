@@ -1,10 +1,11 @@
 import './style.css';
 import { MessageKey, t } from '../src/i18n';
 import type { PlannerItem } from '../src/model';
-import { DEFAULT_SETTINGS, Lang, PlannerSettings } from '../src/settings';
-import { CalendarView } from './calendar';
+import { CalendarView as CalendarRange, DEFAULT_SETTINGS, GanttViewMode, Lang, PlannerSettings } from '../src/settings';
+import { CalendarNav, CalendarView } from './calendar';
 import { formatDate } from './dates';
 import { GanttView } from './gantt';
+import { renderIcons } from './icons';
 import { SettingsView } from './settings';
 import { post } from './vscode';
 
@@ -28,25 +29,76 @@ const state = {
   defaults: DEFAULT_SETTINGS,
   lang: (document.documentElement.lang === 'en' ? 'en' : 'ja') as Lang,
   target: 'workspace' as 'workspace' | 'user',
+  calendarNav: { title: '', range: 'month' } as CalendarNav,
 };
 
-const calendar = new CalendarView(document.getElementById('calendar')!);
-const gantt = new GanttView(document.getElementById('gantt-chart')!, document.getElementById('gantt-empty')!);
-const settings = new SettingsView(document.getElementById('settings')!);
+const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+
+const calendar = new CalendarView($('calendar'), (nav) => {
+  state.calendarNav = nav;
+  renderAppBar();
+});
+const gantt = new GanttView($('gantt-chart'), $('gantt-empty'));
+const settings = new SettingsView($('settings'));
 
 function applyI18n() {
   document.documentElement.lang = state.lang;
   document.querySelectorAll<HTMLElement>('[data-i18n]').forEach((el) => {
     el.textContent = t(state.lang, el.dataset.i18n as MessageKey);
   });
+  document.querySelectorAll<HTMLElement>('[data-i18n-title]').forEach((el) => {
+    const label = t(state.lang, el.dataset.i18nTitle as MessageKey);
+    el.title = label;
+    el.setAttribute('aria-label', label);
+  });
+}
+
+/** Range switch (month/week/day or Day/Week/Month) for the current view. */
+function rangeOptions(): { value: string; label: string; active: boolean; select: () => void }[] {
+  if (state.view === 'calendar') {
+    return (['month', 'week', 'day'] as CalendarRange[]).map((r) => ({
+      value: r,
+      label: t(state.lang, `settings.calendarView.${r}`),
+      active: state.calendarNav.range === r,
+      select: () => calendar.setRange(r),
+    }));
+  }
+  if (state.view === 'gantt') {
+    return (['Day', 'Week', 'Month'] as GanttViewMode[]).map((m) => ({
+      value: m,
+      label: t(state.lang, `settings.ganttViewMode.${m}`),
+      active: gantt.viewMode === m,
+      select: () => {
+        gantt.setViewMode(m);
+        renderAppBar();
+      },
+    }));
+  }
+  return [];
+}
+
+function renderAppBar() {
+  document.body.dataset.view = state.view;
+  document
+    .querySelectorAll<HTMLButtonElement>('[data-view]')
+    .forEach((b) => b.classList.toggle('active', b.dataset.view === state.view));
+  $('nav-title').textContent =
+    state.view === 'calendar' ? state.calendarNav.title : state.view === 'settings' ? t(state.lang, 'settings.title') : '';
+  const range = $('range');
+  range.replaceChildren(
+    ...rangeOptions().map((o) => {
+      const b = document.createElement('button');
+      b.textContent = o.label;
+      b.classList.toggle('active', o.active);
+      b.addEventListener('click', o.select);
+      return b;
+    }),
+  );
 }
 
 function render() {
   applyI18n();
   document.querySelectorAll<HTMLElement>('.view').forEach((el) => (el.hidden = el.id !== state.view));
-  document
-    .querySelectorAll<HTMLButtonElement>('[data-view]')
-    .forEach((b) => b.classList.toggle('active', b.dataset.view === state.view));
   switch (state.view) {
     case 'calendar':
       calendar.update(state.items, state.settings, state.lang);
@@ -58,6 +110,7 @@ function render() {
       settings.update(state.settings, state.defaults, state.lang, state.target);
       break;
   }
+  renderAppBar();
 }
 
 document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((button) =>
@@ -66,7 +119,10 @@ document.querySelectorAll<HTMLButtonElement>('[data-view]').forEach((button) =>
     render();
   }),
 );
-document.getElementById('new-item')!.addEventListener('click', () => {
+$('nav-today').addEventListener('click', () => (state.view === 'gantt' ? gantt.today() : calendar.today()));
+$('nav-prev').addEventListener('click', () => calendar.prev());
+$('nav-next').addEventListener('click', () => calendar.next());
+$('new-item').addEventListener('click', () => {
   post({ type: 'create', date: formatDate(new Date()) });
 });
 
@@ -89,5 +145,7 @@ window.addEventListener('message', (e: MessageEvent<ExtensionMessage>) => {
   render();
 });
 
+renderIcons();
 applyI18n();
+renderAppBar();
 post({ type: 'ready' });

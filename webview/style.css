@@ -1,189 +1,761 @@
 @import '../node_modules/frappe-gantt/dist/frappe-gantt.css';
 
-html, body {
+/* ==== Design tokens ==================================================== */
+/* Own palette; light/dark follows the VS Code theme kind (body class). */
+
+:root {
+  --mp-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+    'Noto Sans JP', 'Yu Gothic UI', Meiryo, sans-serif;
+  --mp-radius-sm: 6px;
+  --mp-radius: 8px;
+  --mp-radius-lg: 12px;
+
+  /* dark (default) */
+  --mp-bg: #141517;
+  --mp-surface: #1a1b1e;
+  --mp-surface-2: #212226;
+  --mp-hover: #26282c;
+  --mp-border: #2b2d32;
+  --mp-border-subtle: #222327;
+  --mp-text: #e8e9ec;
+  --mp-text-muted: #8b909a;
+  --mp-text-faint: #5c606a;
+  --mp-accent: #7c83f7;
+  --mp-accent-hover: #8e94f8;
+  --mp-accent-text: #ffffff;
+  --mp-accent-soft: rgba(124, 131, 247, 0.16);
+  --mp-input: #1c1d20;
+  --mp-danger: #f87171;
+  --mp-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--mp-border);
+}
+
+body.vscode-light,
+body.vscode-high-contrast-light {
+  --mp-bg: #ffffff;
+  --mp-surface: #fbfbfc;
+  --mp-surface-2: #f4f5f7;
+  --mp-hover: #eef0f3;
+  --mp-border: #e3e5e9;
+  --mp-border-subtle: #eceef1;
+  --mp-text: #1c1e21;
+  --mp-text-muted: #6b7280;
+  --mp-text-faint: #a1a6b0;
+  --mp-accent: #5b5fe8;
+  --mp-accent-hover: #4b4fd6;
+  --mp-accent-soft: rgba(91, 95, 232, 0.12);
+  --mp-input: #ffffff;
+  --mp-danger: #dc2626;
+  --mp-shadow: 0 10px 30px rgba(15, 23, 42, 0.12), 0 0 0 1px var(--mp-border);
+}
+
+/* ==== Base ============================================================= */
+
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
-  color: var(--vscode-foreground);
-  background: var(--vscode-editor-background);
-  font-family: var(--vscode-font-family);
-  font-size: var(--vscode-font-size);
 }
-
-body { display: flex; flex-direction: column; }
-
-.toolbar {
+body {
   display: flex;
-  gap: 4px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--vscode-panel-border);
+  flex-direction: column;
+  color: var(--mp-text);
+  background: var(--mp-bg);
+  font-family: var(--mp-font);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
 }
-.toolbar .spacer { flex: 1; }
-.toolbar button {
-  padding: 4px 12px;
-  border: 1px solid var(--vscode-button-border, transparent);
-  border-radius: 2px;
-  color: var(--vscode-button-secondaryForeground);
-  background: var(--vscode-button-secondaryBackground);
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+:focus-visible {
+  outline: 2px solid var(--mp-accent);
+  outline-offset: 1px;
+}
+.icon-svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  flex: none;
+}
+
+/* ==== Buttons ========================================================== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius-sm);
+  background: var(--mp-surface);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+}
+.btn:hover {
+  background: var(--mp-hover);
+}
+.btn.icon {
+  width: 30px;
+  padding: 0;
+  justify-content: center;
+}
+.btn.ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--mp-text-muted);
+}
+.btn.ghost:hover,
+.btn.ghost.active {
+  background: var(--mp-hover);
+  color: var(--mp-text);
+}
+.btn.primary {
+  border-color: transparent;
+  background: var(--mp-accent);
+  color: var(--mp-accent-text);
+  font-weight: 500;
+}
+.btn.primary:hover {
+  background: var(--mp-accent-hover);
+}
+.btn.primary .icon-svg {
+  width: 14px;
+  height: 14px;
+}
+.btn-pair {
+  display: inline-flex;
+}
+.btn-pair .btn:first-child {
+  border-radius: var(--mp-radius-sm) 0 0 var(--mp-radius-sm);
+}
+.btn-pair .btn:last-child {
+  border-radius: 0 var(--mp-radius-sm) var(--mp-radius-sm) 0;
+  margin-left: -1px;
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  gap: 2px;
+  border-radius: var(--mp-radius);
+  background: var(--mp-surface-2);
+}
+.segmented button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 12px;
+  border: none;
+  border-radius: var(--mp-radius-sm);
+  background: transparent;
+  color: var(--mp-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.segmented button:hover {
+  color: var(--mp-text);
+}
+.segmented button.active {
+  background: var(--mp-bg);
+  color: var(--mp-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--mp-border);
+}
+.segmented.compact button {
+  padding: 0 10px;
+}
+.segmented:empty {
+  display: none;
+}
+
+/* ==== App bar ========================================================== */
+
+.appbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--mp-border-subtle);
+  background: var(--mp-bg);
+}
+.appbar-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.appbar-group.end {
+  justify-content: flex-end;
+  gap: 8px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.brand-mark {
+  width: 18px;
+  height: 18px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, var(--mp-accent), #c084fc);
+}
+.nav {
+  gap: 8px;
+}
+.nav h1 {
+  margin: 0 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+/* Per-view chrome: settings has no navigation; the Gantt chart only "today". */
+body[data-view='settings'] .nav .btn,
+body[data-view='settings'] .nav .btn-pair,
+body[data-view='gantt'] .nav .btn-pair {
+  display: none;
+}
+@media (max-width: 760px) {
+  .brand-name {
+    display: none;
+  }
+  .segmented button span[data-i18n] {
+    display: none;
+  }
+}
+
+/* ==== Layout =========================================================== */
+
+main {
+  flex: 1;
+  min-height: 0;
+  padding: 12px 16px 16px;
+}
+.view {
+  height: 100%;
+}
+.view[hidden] {
+  display: none;
+}
+#gantt {
+  overflow: auto;
+}
+.empty {
+  color: var(--mp-text-muted);
+  text-align: center;
+  margin-top: 48px;
+}
+
+/* ==== Calendar (FullCalendar) ========================================== */
+
+.fc {
+  --fc-border-color: var(--mp-border-subtle);
+  --fc-page-bg-color: var(--mp-bg);
+  --fc-neutral-bg-color: var(--mp-surface);
+  --fc-today-bg-color: transparent;
+  --fc-now-indicator-color: var(--mp-accent);
+  --fc-bg-event-opacity: 1; /* background colors carry their own alpha */
+  --fc-more-link-bg-color: transparent;
+  --fc-more-link-text-color: var(--mp-text-muted);
+  --fc-small-font-size: 11px;
+}
+.fc a {
+  color: inherit;
+  text-decoration: none;
+}
+.fc .fc-view-harness {
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius-lg);
+  overflow: hidden;
+  background: var(--mp-bg);
+}
+.fc-theme-standard .fc-scrollgrid {
+  border: none;
+}
+/* Weekday header */
+.fc .fc-col-header-cell {
+  background: var(--mp-surface);
+}
+.fc .fc-col-header-cell-cushion {
+  padding: 8px 4px;
+  color: var(--mp-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+/* Day cells */
+.fc .fc-daygrid-day-frame {
   cursor: pointer;
 }
-.toolbar button:hover { background: var(--vscode-button-secondaryHoverBackground); }
-.toolbar button.active, #new-item {
-  color: var(--vscode-button-foreground);
-  background: var(--vscode-button-background);
+.fc .fc-daygrid-day:hover {
+  background-color: var(--mp-surface);
 }
-
-main { flex: 1; min-height: 0; padding: 12px; }
-.view { height: 100%; }
-.view[hidden] { display: none; }
-#gantt { overflow: auto; }
-.empty { opacity: 0.7; }
-
-/* ---- FullCalendar theming ---- */
-.fc {
-  --fc-border-color: var(--vscode-panel-border);
-  --fc-page-bg-color: var(--vscode-editor-background);
-  --fc-neutral-bg-color: var(--vscode-sideBar-background);
-  --fc-today-bg-color: var(--vscode-editor-selectionHighlightBackground);
-  --fc-button-bg-color: var(--vscode-button-secondaryBackground);
-  --fc-button-border-color: transparent;
-  --fc-button-text-color: var(--vscode-button-secondaryForeground);
-  --fc-button-hover-bg-color: var(--vscode-button-secondaryHoverBackground);
-  --fc-button-hover-border-color: transparent;
-  --fc-button-active-bg-color: var(--vscode-button-background);
-  --fc-button-active-border-color: transparent;
-  --fc-event-bg-color: var(--vscode-charts-blue);
-  --fc-event-border-color: var(--vscode-charts-blue);
-  --fc-list-event-hover-bg-color: var(--vscode-list-hoverBackground);
+.fc .fc-daygrid-day-top {
+  flex-direction: row;
+  padding: 6px 6px 2px;
 }
-.fc a { color: inherit; }
+.fc .fc-daygrid-day-number {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: 11px;
+  line-height: 22px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mp-text);
+}
+.fc .fc-day-other .fc-daygrid-day-number {
+  color: var(--mp-text-faint);
+}
+.fc .fc-day-other .fc-daygrid-day-top {
+  opacity: 1;
+}
 /* Table rows treat height as a minimum: busy weeks grow, others keep their share. */
-.fc .fc-dayGridMonth-view .fc-daygrid-body tbody tr { height: var(--mp-week-row-min, auto); }
-.fc .fc-daygrid-day-frame { cursor: pointer; }
-.fc .fc-popover { background: var(--vscode-editorWidget-background); }
+.fc .fc-dayGridMonth-view .fc-daygrid-body tbody tr {
+  height: var(--mp-week-row-min, auto);
+}
+/* Time grid */
+.fc .fc-timegrid-slot {
+  height: 2.6em;
+}
+.fc .fc-timegrid-slot-minor {
+  border-top-style: none;
+}
+.fc .fc-timegrid-slot-label-cushion,
+.fc .fc-timegrid-axis-cushion {
+  color: var(--mp-text-faint);
+  font-size: 11px;
+}
+.fc .fc-timegrid-col.fc-day-today {
+  background: var(--mp-accent-soft);
+}
 
-.fc-event.is-done { opacity: 0.5; text-decoration: line-through; }
+/* Events: soft fill + left accent line */
+.fc .mp-ev {
+  margin: 1px 4px;
+  padding: 1px 4px;
+  border-width: 0 0 0 3px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  box-shadow: none;
+}
+.fc .mp-ev .fc-event-main {
+  color: var(--mp-text);
+}
+.fc .mp-ev .fc-event-time {
+  font-weight: 400;
+  color: var(--mp-text-muted);
+}
+.fc .mp-ev:hover {
+  filter: brightness(1.15);
+}
+body.vscode-light .fc .mp-ev:hover {
+  filter: brightness(0.96);
+}
+.fc .fc-timegrid-event.mp-ev {
+  margin: 0;
+  border-width: 0 0 0 3px;
+  box-shadow: 0 0 0 1px var(--mp-bg);
+}
+.fc .mp-ev.is-done {
+  opacity: 0.55;
+}
+.fc .mp-ev.is-done .fc-event-title {
+  text-decoration: line-through;
+}
+.fc .fc-daygrid-more-link {
+  margin: 2px 6px;
+  font-size: 11px;
+  font-weight: 500;
+}
+.fc .fc-daygrid-more-link:hover {
+  color: var(--mp-text);
+  background: var(--mp-hover);
+}
+.fc .fc-popover {
+  border: none;
+  border-radius: var(--mp-radius);
+  background: var(--mp-surface);
+  box-shadow: var(--mp-shadow);
+  overflow: hidden;
+}
+.fc .fc-popover-header {
+  padding: 8px 10px;
+  background: var(--mp-surface-2);
+  font-weight: 600;
+}
+
+/* Today: accent pill on the day number */
+.fc .fc-day-today .fc-daygrid-day-number {
+  background: var(--mp-accent);
+  color: var(--mp-accent-text);
+}
+.fc .fc-col-header-cell.fc-day-today .fc-col-header-cell-cushion {
+  color: var(--mp-accent);
+}
 
 /* Days off */
 .fc .mp-holiday .fc-daygrid-day-number,
-.fc .fc-col-header-cell.mp-holiday,
-.fc .mp-holiday .fc-col-header-cell-cushion { color: var(--mp-holiday-color); font-weight: bold; }
-.fc .mp-vacation .fc-daygrid-day-number { font-weight: bold; }
-/* Background colors carry their own alpha (see translucent()). */
-.fc { --fc-bg-event-opacity: 1; }
+.fc .fc-col-header-cell.mp-holiday .fc-col-header-cell-cushion {
+  color: var(--mp-holiday-color);
+}
+/* Month view: holiday name beside the day number. */
 .fc .fc-bg-event.mp-holiday-bg .fc-event-title {
+  margin: 9px 8px 0 36px;
   color: var(--mp-holiday-color);
   font-style: normal;
-  font-size: 0.85em;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Week/day views show the holiday name in the column header instead. */
+.fc .fc-timegrid .fc-bg-event.mp-holiday-bg .fc-event-title {
+  display: none;
+}
+.fc .fc-timegrid .fc-col-header-cell-cushion {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+}
+.fc .mp-dnum {
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: 11px;
+  line-height: 22px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--mp-text);
+}
+.fc .fc-day-today .mp-dnum {
+  background: var(--mp-accent);
+  color: var(--mp-accent-text);
+}
+.fc .mp-holiday .mp-dnum {
+  color: var(--mp-holiday-color);
+}
+.fc .mp-hname {
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--mp-holiday-color);
 }
 
-/* ---- frappe-gantt theming ---- */
+/* ==== Gantt (frappe-gantt) ============================================= */
+
 .gantt-container {
-  --g-bar-color: var(--vscode-charts-blue);
+  --g-bar-color: var(--mp-surface-2);
   --g-bar-border: transparent;
-  --g-progress-color: var(--vscode-charts-green);
-  --g-arrow-color: var(--vscode-foreground);
-  --g-header-background: var(--vscode-editor-background);
-  --g-row-color: var(--vscode-editor-background);
-  --g-row-border-color: var(--vscode-panel-border);
-  --g-tick-color: var(--vscode-panel-border);
-  --g-tick-color-thick: var(--vscode-panel-border);
-  --g-text-light: var(--vscode-button-foreground);
-  --g-text-dark: var(--vscode-foreground);
-  --g-text-muted: var(--vscode-descriptionForeground);
-  --g-border-color: var(--vscode-panel-border);
-  --g-popup-actions: var(--vscode-editorWidget-background);
-  --g-today-highlight: var(--vscode-charts-red);
-  --g-actions-background: var(--vscode-button-secondaryBackground);
-  background: var(--vscode-editor-background);
+  --g-progress-color: var(--mp-accent);
+  --g-arrow-color: var(--mp-text-faint);
+  --g-header-background: var(--mp-bg);
+  --g-row-color: var(--mp-bg);
+  --g-row-border-color: var(--mp-border-subtle);
+  --g-tick-color: var(--mp-border-subtle);
+  --g-tick-color-thick: var(--mp-border);
+  --g-text-light: var(--mp-text);
+  --g-text-dark: var(--mp-text);
+  --g-text-muted: var(--mp-text-muted);
+  --g-border-color: var(--mp-border);
+  --g-popup-actions: var(--mp-surface-2);
+  --g-today-highlight: var(--mp-accent);
+  --g-actions-background: var(--mp-surface-2);
+  --g-weekend-label-color: var(--mp-surface-2);
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius-lg);
+  background: var(--mp-bg);
+  font-family: var(--mp-font);
+}
+.gantt-container .grid-header {
+  border-bottom: 1px solid var(--mp-border);
+}
+.gantt-container .upper-text {
+  font-weight: 600;
+  color: var(--mp-text);
+}
+.gantt-container .lower-text {
+  font-size: 11px;
+  color: var(--mp-text-muted);
+}
+.gantt-container .current-date-highlight {
+  background: var(--mp-accent);
+  color: var(--mp-accent-text);
+  border-radius: 6px;
+}
+.gantt .bar-label {
+  font-size: 12px;
+  font-weight: 500;
 }
 /* Status colors are injected from settings by webview/gantt.ts; the doubled
    class keeps parent styling above those injected rules. */
-.gantt .bar-wrapper[class*="_x-1_"] { opacity: 0.5; }
-.gantt .bar-wrapper.bar-wrapper[class*="_p-1_"] .bar { fill: var(--vscode-charts-foreground, #888); }
-.gantt .bar-wrapper[class*="_p-1_"] .bar-label { font-weight: bold; }
-.gantt .bar-wrapper[class*="_d-1_"] .bar { fill-opacity: 0.6; stroke: var(--vscode-foreground); stroke-dasharray: 4 2; }
-.gantt .bar-wrapper[class*="_d-1_"] .bar-progress { display: none; }
-.gantt-container .popup-wrapper { background: var(--vscode-editorWidget-background); color: var(--vscode-foreground); }
-
-/* ---- settings ---- */
-#settings { overflow: auto; }
-.settings { max-width: 820px; }
-.settings .note { opacity: 0.8; margin-top: 0; }
-.settings section { margin-bottom: 24px; }
-.settings h2 {
-  font-size: 1.1em;
-  font-weight: 600;
-  margin: 0 0 8px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--vscode-panel-border);
+.gantt .bar-wrapper[class*='_x-1_'] {
+  opacity: 0.55;
 }
-.settings .help { opacity: 0.8; margin: 4px 0 8px; }
+.gantt .bar-wrapper.bar-wrapper[class*='_p-1_'] .bar {
+  fill: var(--mp-text-muted);
+  fill-opacity: 0.18;
+  stroke: var(--mp-text-muted);
+  stroke-opacity: 0.4;
+}
+.gantt .bar-wrapper.bar-wrapper[class*='_p-1_'] .bar-progress {
+  fill: var(--mp-text-muted);
+  fill-opacity: 0.35;
+}
+.gantt .bar-wrapper[class*='_p-1_'] .bar-label {
+  font-weight: 700;
+}
+.gantt .bar-wrapper[class*='_d-1_'] .bar {
+  stroke-dasharray: 4 3;
+  stroke-opacity: 0.7;
+}
+.gantt .bar-wrapper[class*='_d-1_'] .bar-progress {
+  display: none;
+}
+.gantt-container .popup-wrapper {
+  border-radius: var(--mp-radius);
+  background: var(--mp-surface);
+  color: var(--mp-text);
+  box-shadow: var(--mp-shadow);
+}
+.gantt-container .holiday-label {
+  color: var(--mp-text);
+  font-size: 11px;
+}
+
+/* ==== Settings ========================================================= */
+
+#settings {
+  overflow: auto;
+}
+.settings {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 8px 0 32px;
+}
+.settings .note {
+  margin: 0 0 16px;
+  color: var(--mp-text-muted);
+}
+.settings section {
+  margin-bottom: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius-lg);
+  background: var(--mp-surface);
+}
+.settings h2 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.settings .help {
+  margin: 0 0 8px;
+  color: var(--mp-text-muted);
+}
 .settings .row {
   display: grid;
-  grid-template-columns: minmax(140px, 220px) 1fr 28px;
-  gap: 8px;
+  grid-template-columns: minmax(150px, 220px) 1fr 30px;
+  gap: 12px;
   align-items: start;
-  padding: 6px 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--mp-border-subtle);
 }
-.settings .row > label { padding-top: 4px; }
-.settings .control { min-width: 0; }
-.settings .control.wide { grid-column: 1 / 3; }
+.settings h2 + .row,
+.settings .help + .row {
+  border-top: none;
+}
+.settings .row > label {
+  padding-top: 6px;
+  color: var(--mp-text);
+}
+.settings .control {
+  min-width: 0;
+}
+.settings .control.wide {
+  grid-column: 1 / 3;
+}
 .settings input[type='text'],
 .settings input[type='number'],
 .settings textarea,
 .settings select {
   box-sizing: border-box;
   width: 100%;
-  padding: 3px 6px;
-  color: var(--vscode-input-foreground);
-  background: var(--vscode-input-background);
-  border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
-  border-radius: 2px;
-  font: inherit;
+  min-height: 32px;
+  padding: 6px 10px;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius-sm);
+  background: var(--mp-input);
+  transition: border-color 0.12s, box-shadow 0.12s;
 }
-.settings select { width: auto; min-width: 160px; }
-.settings input.narrow { width: 80px; }
-.settings textarea { resize: vertical; }
-.settings .mono, .settings textarea { font-family: var(--vscode-editor-font-family, monospace); }
-.settings input:focus, .settings textarea:focus, .settings select:focus {
-  outline: 1px solid var(--vscode-focusBorder);
-  outline-offset: -1px;
+.settings input::placeholder,
+.settings textarea::placeholder {
+  color: var(--mp-text-faint);
+}
+.settings input:focus,
+.settings textarea:focus,
+.settings select:focus {
+  outline: none;
+  border-color: var(--mp-accent);
+  box-shadow: 0 0 0 3px var(--mp-accent-soft);
+}
+.settings select {
+  width: auto;
+  min-width: 180px;
+}
+.settings input.narrow {
+  width: 90px;
+}
+.settings textarea {
+  resize: vertical;
+}
+.settings .mono,
+.settings textarea {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+.settings input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 7px 0 0;
+  accent-color: var(--mp-accent);
 }
 .settings input[type='color'] {
-  width: 44px;
-  height: 26px;
-  padding: 0 2px;
-  border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
-  background: var(--vscode-input-background);
+  width: 36px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius-sm);
+  background: var(--mp-input);
+  cursor: pointer;
+}
+.settings input[type='color']::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.settings input[type='color']::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
 }
 .settings button {
-  color: var(--vscode-button-secondaryForeground);
-  background: var(--vscode-button-secondaryBackground);
-  border: none;
-  border-radius: 2px;
-  padding: 3px 10px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius-sm);
+  background: var(--mp-bg);
   cursor: pointer;
-  font: inherit;
 }
-.settings button:hover:not(:disabled) { background: var(--vscode-button-secondaryHoverBackground); }
-.settings button:disabled { opacity: 0.4; cursor: default; }
-.settings button.reset, .settings button.icon { padding: 2px 6px; }
-.settings .error { color: var(--vscode-errorForeground); margin: 4px 0; }
-.settings .weekdays { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 3px; }
-.settings .weekdays label { display: inline-flex; align-items: center; gap: 4px; }
-.settings .weekdays input[type='color'] { width: 32px; height: 22px; }
-.settings .weekdays input[type='color']:disabled { opacity: 0.3; }
+.settings button:hover:not(:disabled) {
+  background: var(--mp-hover);
+}
+.settings button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.settings button.reset,
+.settings button.icon {
+  width: 30px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--mp-text-muted);
+}
+.settings button.reset:hover:not(:disabled),
+.settings button.icon:hover:not(:disabled) {
+  background: var(--mp-hover);
+  color: var(--mp-text);
+}
+.settings .error {
+  margin: 6px 0 0;
+  color: var(--mp-danger);
+}
+.settings .weekdays {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.settings .weekdays label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid var(--mp-border);
+  border-radius: 999px;
+  background: var(--mp-bg);
+}
+.settings .weekdays input[type='checkbox'] {
+  margin: 0;
+}
+.settings .weekdays input[type='color'] {
+  width: 26px;
+  height: 22px;
+  border-radius: 999px;
+}
+.settings .weekdays input[type='color']::-webkit-color-swatch {
+  border-radius: 999px;
+}
+.settings .weekdays input[type='color']:disabled {
+  opacity: 0.25;
+}
 .settings .properties {
   display: grid;
-  grid-template-columns: minmax(140px, 220px) 1fr;
-  gap: 4px 8px;
+  grid-template-columns: minmax(150px, 220px) 1fr;
+  gap: 6px 12px;
   align-items: center;
 }
-.settings .properties label { text-align: right; }
-.settings table.statuses { border-collapse: collapse; width: 100%; margin-bottom: 8px; }
-.settings table.statuses th { text-align: left; font-weight: normal; opacity: 0.8; padding: 0 4px 4px; white-space: nowrap; }
-.settings table.statuses td { padding: 2px 4px; }
-.settings table.statuses td.center { text-align: center; }
-.settings table.statuses td.actions { white-space: nowrap; }
-.settings table.statuses input[type='number'] { width: 72px; }
+.settings .properties label {
+  text-align: right;
+  color: var(--mp-text-muted);
+}
+.settings .properties code {
+  color: var(--mp-text);
+}
+.settings table.statuses {
+  width: 100%;
+  margin-bottom: 10px;
+  border-collapse: collapse;
+}
+.settings table.statuses th {
+  padding: 0 6px 6px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: var(--mp-text-muted);
+  white-space: nowrap;
+}
+.settings table.statuses td {
+  padding: 3px 6px;
+}
+.settings table.statuses td.center {
+  text-align: center;
+}
+.settings table.statuses td.center input[type='checkbox'] {
+  margin: 0;
+}
+.settings table.statuses td.actions {
+  white-space: nowrap;
+}
+.settings table.statuses input[type='number'] {
+  width: 80px;
+}

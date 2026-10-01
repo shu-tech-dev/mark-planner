@@ -3,7 +3,7 @@ import { buildTree, TreeRow } from '../src/hierarchy';
 import { DayLabel, japaneseHolidaysBetween, vacationDays, weekendColor } from '../src/holidays';
 import { t } from '../src/i18n';
 import type { PlannerItem } from '../src/model';
-import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
+import { GanttViewMode, Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { translucent } from './colors';
 import { addDays, formatDate, formatDateTime, isDateOnly } from './dates';
 import { post } from './vscode';
@@ -19,11 +19,13 @@ function barClass(type: string, statusIndex: number, parent: boolean, derived: b
   return `mp_t-${type}_s-${statusIndex}_p-${+parent}_d-${+derived}_x-${+done}_`;
 }
 
+/** Soft bar with a solid progress fill and outline in the status color. */
 function statusStyles(settings: PlannerSettings): string {
-  const rules = settings.statuses.map(
-    (s, i) => `.gantt .bar-wrapper[class*="_s-${i}_"] .bar { fill: ${s.color}; }`,
-  );
-  rules.push(`.gantt .bar-wrapper[class*="_t-event_"] .bar { fill: ${settings.eventColor}; }`);
+  const rule = (selector: string, color: string) =>
+    `.gantt .bar-wrapper${selector} .bar { fill: ${color}; fill-opacity: 0.22; stroke: ${color}; stroke-opacity: 0.55; }
+.gantt .bar-wrapper${selector} .bar-progress { fill: ${color}; fill-opacity: 0.6; }`;
+  const rules = settings.statuses.map((s, i) => rule(`[class*="_s-${i}_"]`, s.color));
+  rules.push(rule('[class*="_t-event_"]', settings.eventColor));
   return rules.join('\n');
 }
 
@@ -45,7 +47,7 @@ function dayShading(items: PlannerItem[], rows: TreeRow[], settings: PlannerSett
   };
   for (const [day, color] of Object.entries(settings.weekendColors)) {
     // A holiday on a weekend is shaded as a holiday only.
-    add(translucent(color), [
+    add(translucent(color, '12'), [
       (d: Date) => d.getDay() === Number(day) && weekendColor(formatDate(d), d.getDay(), settings) !== undefined,
     ]);
   }
@@ -53,11 +55,11 @@ function dayShading(items: PlannerItem[], rows: TreeRow[], settings: PlannerSett
     // The chart pads (and scrolls) beyond the tasks, so cover a generous range.
     const from = addDays(rows.reduce((m, r) => (r.start < m ? r.start : m), rows[0].start).slice(0, 10), -400);
     const to = addDays(rows.reduce((m, r) => (r.end > m ? r.end : m), rows[0].end).slice(0, 10), 400);
-    add(translucent(settings.holidayColor), japaneseHolidaysBetween(from, to, lang));
+    add(translucent(settings.holidayColor, '17'), japaneseHolidaysBetween(from, to, lang));
   }
   const vacations = vacationDays(items);
   if (vacations.length) {
-    add(translucent(settings.vacationColor), vacations);
+    add(translucent(settings.vacationColor, '17'), vacations);
   }
   return { holidays };
 }
@@ -67,6 +69,9 @@ export class GanttView {
   private rows: TreeRow[] = [];
   private tasks: unknown[] = [];
   private applied = '';
+  /** Current scale; follows the setting when it changes, otherwise the app bar. */
+  private mode: GanttViewMode = 'Day';
+  private appliedSettingMode: GanttViewMode | undefined;
   private readonly style = document.head.appendChild(document.createElement('style'));
 
   constructor(
@@ -102,8 +107,12 @@ export class GanttView {
     });
 
     this.empty.hidden = this.tasks.length > 0;
-    // Language and scale are construction options, so rebuild when they change.
-    const applied = `${lang}|${settings.ganttViewMode}`;
+    if (this.appliedSettingMode !== settings.ganttViewMode) {
+      this.appliedSettingMode = settings.ganttViewMode;
+      this.mode = settings.ganttViewMode;
+    }
+    // Language is a construction option, so rebuild when it changes.
+    const applied = lang;
     if (this.tasks.length === 0 || applied !== this.applied) {
       this.chart.innerHTML = '';
       this.gantt = undefined;
@@ -113,17 +122,23 @@ export class GanttView {
       return;
     }
     if (this.gantt) {
-      // Shading is read from options on every render.
-      Object.assign(this.gantt.options, shading);
+      // Shading and scale are read from options on every render.
+      Object.assign(this.gantt.options, shading, { view_mode: this.mode });
       this.gantt.refresh(this.tasks);
       return;
     }
     this.gantt = new Gantt(this.chart, this.tasks, {
       ...shading,
       language: lang,
-      view_mode: settings.ganttViewMode,
-      view_mode_select: true,
+      view_mode: this.mode,
+      // Scale and "today" are driven from the app bar.
+      view_mode_select: false,
+      today_button: false,
       readonly_progress: true,
+      bar_height: 24,
+      bar_corner_radius: 6,
+      padding: 20,
+      arrow_curve: 6,
       on_double_click: (task: { id: string }) => {
         post({ type: 'open', key: this.rowOf(task).item.key });
       },
@@ -138,6 +153,19 @@ export class GanttView {
         post({ type: 'move', key: row.item.key, start: fmt(start), end: fmt(end) });
       },
     });
+  }
+
+  get viewMode(): GanttViewMode {
+    return this.mode;
+  }
+
+  setViewMode(mode: GanttViewMode): void {
+    this.mode = mode;
+    this.gantt?.change_view_mode(mode);
+  }
+
+  today(): void {
+    this.gantt?.scroll_current();
   }
 
   private rowOf(task: { id: string }): TreeRow {
