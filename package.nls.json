@@ -41,5 +41,6 @@
   "config.theme.auto": "Follow the VS Code theme (light or dark)",
   "config.theme.light": "Always light",
   "config.theme.dark": "Always dark",
-  "command.openTable": "Open Table"
+  "command.openTable": "Open Table",
+  "config.dateFormat": "Display format of dates in Mark Planner screens (files keep `YYYY-MM-DD`). `auto` omits the current year. Tokens: `YYYY` `YY` `M` `MM` `MMM` `MMMM` `D` `DD` `ddd` `dddd`; wrap literal text in `[...]`. Times are appended as ` HH:mm`."
 }

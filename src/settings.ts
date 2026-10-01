@@ -30,6 +30,8 @@ export interface PlannerSettings {
   maxEventsPerDay: number;
   /** Color theme of the planner; `auto` follows the VS Code theme kind. */
   theme: Theme;
+  /** Display format for dates (see dateFormat.ts); `auto` omits the current year. */
+  dateFormat: string;
   /** Days of week treated as days off, mapped to their color (`"0"` = Sunday … `"6"` = Saturday). */
   weekendColors: Record<string, string>;
   /** Show Japanese public holidays. */
@@ -62,6 +64,7 @@ export const DEFAULT_SETTINGS: PlannerSettings = {
   hideDone: false,
   maxEventsPerDay: 0,
   theme: 'auto',
+  dateFormat: 'auto',
   weekendColors: { '0': '#f14c4c', '6': '#3794ff' },
   showHolidays: true,
   holidayColor: '#f14c4c',
@@ -133,6 +136,10 @@ export function normalizeSettings(raw: Partial<Record<SettingKey, unknown>>): Pl
       ? (raw.maxEventsPerDay as number)
       : d.maxEventsPerDay,
     theme: oneOf(raw.theme, ['auto', 'light', 'dark'], d.theme),
+    dateFormat:
+      typeof raw.dateFormat === 'string' && raw.dateFormat.trim() && raw.dateFormat.length <= 64
+        ? raw.dateFormat.trim()
+        : d.dateFormat,
     weekendColors: isRecord(raw.weekendColors)
       ? Object.fromEntries(
           Object.entries(raw.weekendColors)

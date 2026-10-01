@@ -11,6 +11,8 @@ import {
   TableQuery,
   TableRow,
 } from '../src/table';
+import { formatDisplayDate } from '../src/dateFormat';
+import { attachDatePicker, parseEditorText, toEditorText } from './datepicker';
 import { icon } from './icons';
 import { closePopover, menuList, openPopover } from './menu';
 import { post } from './vscode';
@@ -533,18 +535,22 @@ export class TableView {
   }
 
   private formatDate(value: string): string {
-    const [y, m, d] = value.slice(0, 10).split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    const weekday = new Intl.DateTimeFormat(this.lang, { weekday: 'short' }).format(date);
-    const sameYear = y === new Date().getFullYear();
-    const day = sameYear ? `${m}/${d}` : `${y}/${m}/${d}`;
-    return `${day} (${weekday})${value.length > 10 ? ` ${value.slice(11)}` : ''}`;
+    return formatDisplayDate(value, this.settings.dateFormat, this.lang);
   }
 
   // ---- editors ---------------------------------------------------------
 
-  /** Replaces the cell content with an input; commits on Enter/blur, cancels on Escape. */
-  private openEditor(td: HTMLElement, input: HTMLInputElement, commit: (value: string) => void): void {
+  /**
+   * Replaces the cell content with an input; commits on Enter/blur, cancels on Escape.
+   * With `validate`, Enter on an invalid value keeps the editor open (marked invalid)
+   * and blur discards it. `setup` may attach extras and returns their cleanup.
+   */
+  private openEditor(
+    td: HTMLElement,
+    input: HTMLInputElement,
+    commit: (value: string) => void,
+    options: { validate?: (value: string) => boolean; setup?: (finish: () => void) => () => void } = {},
+  ): void {
     if (this.editing) {
       return;
     }
@@ -552,13 +558,16 @@ export class TableView {
     this.editing = true;
     const original = input.value;
     let done = false;
+    let cleanup = () => {};
+    const valid = () => !options.validate || options.validate(input.value);
     const finish = (save: boolean) => {
       if (done) {
         return;
       }
       done = true;
       this.editing = false;
-      if (save && input.value !== original) {
+      cleanup();
+      if (save && valid() && input.value !== original) {
         commit(input.value);
       }
       // Re-render from the latest items (the write comes back as an items update).
@@ -567,16 +576,24 @@ export class TableView {
     };
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        finish(true);
+        if (valid()) {
+          finish(true);
+        } else {
+          td.classList.add('invalid');
+        }
       } else if (e.key === 'Escape') {
         finish(false);
       }
     });
+    input.addEventListener('input', () => td.classList.remove('invalid'));
     input.addEventListener('blur', () => finish(true));
     td.classList.add('editing');
     td.replaceChildren(input);
     input.focus();
     input.select?.();
+    if (options.setup) {
+      cleanup = options.setup(() => finish(true));
+    }
   }
 
   private textEditor(td: HTMLElement, value: string, commit: (value: string) => void, isList = false): void {
@@ -588,14 +605,19 @@ export class TableView {
     this.openEditor(td, input, commit);
   }
 
+  /** `YYYY/MM/DD` (or `YYYY/MM/DD HH:mm`) text input with a calendar popup. */
   private dateEditor(td: HTMLElement, item: PlannerItem, field: 'start' | 'end'): void {
     const value = item[field];
     const other = item[field === 'start' ? 'end' : 'start'];
     // Timed when this value (or, if empty, the other date) has a time.
     const timed = (value ?? other ?? '').length > 10;
-    const input = el('input', 'cell-input');
-    input.type = timed ? 'datetime-local' : 'date';
-    input.value = value ?? '';
-    this.openEditor(td, input, (v) => this.patch(item, field, v));
+    const input = el('input', 'cell-input mono');
+    input.value = toEditorText(value);
+    input.placeholder = timed ? 'YYYY/MM/DD HH:mm' : 'YYYY/MM/DD';
+    input.spellcheck = false;
+    this.openEditor(td, input, (v) => this.patch(item, field, parseEditorText(v)), {
+      validate: (v) => parseEditorText(v) !== undefined,
+      setup: (finish) => attachDatePicker(input, this.settings, this.lang, finish),
+    });
   }
 }

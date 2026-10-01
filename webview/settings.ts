@@ -1,5 +1,6 @@
 import { MessageKey, t } from '../src/i18n';
 import { DEFAULT_PROPERTY_MAP, PropertyMap } from '../src/model';
+import { AUTO_DATE_FORMAT, DATE_FORMAT_PRESETS, formatDisplayDate } from '../src/dateFormat';
 import { Lang, PlannerSettings, SettingKey, StatusDef } from '../src/settings';
 import { post } from './vscode';
 
@@ -94,6 +95,7 @@ export class SettingsView {
             ['light', this.tr('settings.theme.light')],
             ['dark', this.tr('settings.theme.dark')],
           ]),
+          this.dateFormatField(),
           this.selectField('calendarView', 'settings.calendarView', [
             ['month', this.tr('settings.calendarView.month')],
             ['week', this.tr('settings.calendarView.week')],
@@ -233,6 +235,56 @@ export class SettingsView {
     });
     this.bind(key, input, (s) => (input.value = String(s[key])));
     return this.row(key, label, input);
+  }
+
+  /** Preset select plus a free-form pattern with a live preview. */
+  private dateFormatField() {
+    const key: SettingKey = 'dateFormat';
+    const sample = (() => {
+      const d = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T10:00`;
+    })();
+    const preview = (format: string) => formatDisplayDate(sample, format, this.lang!);
+    const CUSTOM = '__custom__';
+    const select = h(
+      'select',
+      {},
+      ...DATE_FORMAT_PRESETS.map((p) =>
+        h('option', { value: p }, p === AUTO_DATE_FORMAT ? this.tr('settings.dateFormat.auto') : `${preview(p).slice(0, -6)}　${p}`),
+      ),
+      h('option', { value: CUSTOM }, this.tr('settings.dateFormat.custom')),
+    );
+    const custom = h('input', { type: 'text', spellcheck: false, placeholder: 'YYYY/MM/DD (ddd)' });
+    const previewEl = h('span', { class: 'preview' });
+    const customRow = h('div', { class: 'date-custom' }, custom, h('p', { class: 'help' }, this.tr('settings.dateFormat.help')));
+    const show = (format: string, isCustom: boolean) => {
+      customRow.hidden = !isCustom;
+      previewEl.textContent = `${this.tr('settings.dateFormat.preview')}: ${preview(format || AUTO_DATE_FORMAT)}`;
+    };
+    select.addEventListener('change', () => {
+      if (select.value === CUSTOM) {
+        custom.value = custom.value || 'YYYY/MM/DD (ddd)';
+        show(custom.value, true);
+        save(key, custom.value);
+        custom.focus();
+      } else {
+        show(select.value, false);
+        save(key, select.value === AUTO_DATE_FORMAT ? undefined : select.value);
+      }
+    });
+    custom.addEventListener('input', () => show(custom.value, true));
+    custom.addEventListener('change', () => save(key, custom.value.trim() || undefined));
+    const wrapper = h('div', { class: 'date-format' }, h('div', { class: 'date-select' }, select, previewEl), customRow);
+    this.bind(key, wrapper, (s) => {
+      const isPreset = (DATE_FORMAT_PRESETS as readonly string[]).includes(s.dateFormat);
+      select.value = isPreset ? s.dateFormat : CUSTOM;
+      if (!isPreset) {
+        custom.value = s.dateFormat;
+      }
+      show(s.dateFormat, !isPreset);
+    });
+    return this.row(key, 'settings.dateFormat', wrapper);
   }
 
   private checkboxField(key: SettingKey, label: MessageKey) {

@@ -88,6 +88,7 @@ end: 2026-10-20
 | `markPlanner.statuses` | todo / doing / done | ステータスの値・表示名・色・進捗率・完了扱い。先頭が新規作成時の初期値 |
 | `markPlanner.eventColor` | `#b180d7` | `type: event` の色 |
 | `markPlanner.theme` | `auto` | 画面のテーマ（`auto` = VS Code に合わせる / `light` / `dark`） |
+| `markPlanner.dateFormat` | `auto` | 画面での日付の表示形式（ファイルは `YYYY-MM-DD` のまま）。`auto` は今年の年を省略。記号 `YYYY` `YY` `M` `MM` `MMM` `MMMM` `D` `DD` `ddd` `dddd`、文字は `[...]` で囲む |
 | `markPlanner.calendarView` | `month` | カレンダーの初期表示 |
 | `markPlanner.weekStart` | `0`（日曜） | 週の開始曜日 |
 | `markPlanner.ganttViewMode` | `Day` | ガントの初期スケール |

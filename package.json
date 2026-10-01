@@ -194,6 +194,21 @@
           ],
           "order": 8
         },
+        "markPlanner.dateFormat": {
+          "type": "string",
+          "default": "auto",
+          "maxLength": 64,
+          "examples": [
+            "auto",
+            "M/D (ddd)",
+            "YYYY/MM/DD",
+            "YYYY-MM-DD",
+            "YYYY年M月D日(ddd)",
+            "MMM D, YYYY"
+          ],
+          "markdownDescription": "%config.dateFormat%",
+          "order": 9
+        },
         "markPlanner.calendarView": {
           "type": "string",
           "enum": [
@@ -203,7 +218,7 @@
           ],
           "default": "month",
           "description": "%config.calendarView%",
-          "order": 9
+          "order": 10
         },
         "markPlanner.weekStart": {
           "type": "integer",
@@ -227,7 +242,7 @@
             "%weekday.5%",
             "%weekday.6%"
           ],
-          "order": 10
+          "order": 11
         },
         "markPlanner.ganttViewMode": {
           "type": "string",
@@ -238,20 +253,20 @@
           ],
           "default": "Day",
           "description": "%config.ganttViewMode%",
-          "order": 11
+          "order": 12
         },
         "markPlanner.hideDone": {
           "type": "boolean",
           "default": false,
           "description": "%config.hideDone%",
-          "order": 12
+          "order": 13
         },
         "markPlanner.maxEventsPerDay": {
           "type": "integer",
           "minimum": 0,
           "default": 0,
           "description": "%config.maxEventsPerDay%",
-          "order": 13
+          "order": 14
         },
         "markPlanner.weekendColors": {
           "type": "object",
@@ -305,27 +320,27 @@
             }
           },
           "markdownDescription": "%config.weekendColors%",
-          "order": 14
+          "order": 15
         },
         "markPlanner.showHolidays": {
           "type": "boolean",
           "default": true,
           "description": "%config.showHolidays%",
-          "order": 15
+          "order": 16
         },
         "markPlanner.holidayColor": {
           "type": "string",
           "format": "color",
           "default": "#f14c4c",
           "description": "%config.holidayColor%",
-          "order": 16
+          "order": 17
         },
         "markPlanner.vacationColor": {
           "type": "string",
           "format": "color",
           "default": "#2ea043",
           "description": "%config.vacationColor%",
-          "order": 17
+          "order": 18
         },
         "markPlanner.language": {
           "type": "string",
@@ -341,7 +356,7 @@
             "日本語",
             "English"
           ],
-          "order": 18
+          "order": 19
         }
       }
     }
