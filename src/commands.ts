@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
+import { getConfig, getLang } from './config';
 import { baseFileName, replaceIdPrefix, uniqueFileName } from './filename';
 import { createFrontmatterFile } from './frontmatter';
 import { generateId } from './id';
+import { t } from './i18n';
 import { ItemType } from './model';
+import { renderTemplate } from './settings';
 import { PlannerStore, writeFrontmatter } from './store';
 
 const encoder = new TextEncoder();
@@ -25,22 +27,26 @@ async function exists(uri: vscode.Uri): Promise<boolean> {
 
 /** Prompts for title/type and creates `<folder>/<date>-<title>.md`. */
 export async function createItem(store: PlannerStore, date?: string): Promise<void> {
+  const lang = getLang();
   const root = vscode.workspace.workspaceFolders?.[0];
   if (!root) {
-    void vscode.window.showErrorMessage('Mark Planner: フォルダを開いてから実行してください。');
+    void vscode.window.showErrorMessage(t(lang, 'msg.noFolder'));
     return;
   }
 
-  const title = await vscode.window.showInputBox({ prompt: 'タイトル', placeHolder: '定例MTG' });
+  const title = await vscode.window.showInputBox({
+    prompt: t(lang, 'msg.titlePrompt'),
+    placeHolder: t(lang, 'msg.titlePlaceholder'),
+  });
   if (!title?.trim()) {
     return;
   }
   const picked = await vscode.window.showQuickPick(
     [
-      { label: 'タスク', type: 'task' as ItemType },
-      { label: '予定', type: 'event' as ItemType },
+      { label: t(lang, 'msg.type.task'), type: 'task' as ItemType },
+      { label: t(lang, 'msg.type.event'), type: 'event' as ItemType },
     ],
-    { placeHolder: '種類' },
+    { placeHolder: t(lang, 'msg.typePlaceholder') },
   );
   if (!picked) {
     return;
@@ -48,15 +54,16 @@ export async function createItem(store: PlannerStore, date?: string): Promise<vo
   const start =
     date ??
     (await vscode.window.showInputBox({
-      prompt: '開始日 (YYYY-MM-DD または YYYY-MM-DDTHH:mm)',
+      prompt: t(lang, 'msg.startPrompt'),
       value: today(),
-      validateInput: (v) => (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(v.trim()) ? undefined : '日付の形式が不正です'),
+      validateInput: (v) => (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(v.trim()) ? undefined : t(lang, 'msg.invalidDate')),
     }));
   if (!start) {
     return;
   }
 
-  const { newItemFolder, properties: p } = getConfig();
+  const config = getConfig();
+  const { newItemFolder, properties: p } = config;
   const folder = vscode.Uri.joinPath(root.uri, newItemFolder);
   await vscode.workspace.fs.createDirectory(folder);
   const id = generateId(store.takenIds());
@@ -70,12 +77,20 @@ export async function createItem(store: PlannerStore, date?: string): Promise<vo
     [p.type]: picked.type,
   };
   if (picked.type === 'task') {
-    data[p.status] = 'todo';
+    data[p.status] = config.statuses[0].name;
   }
   data[p.start] = start.trim();
   data[p.tags] = [];
+  // Template keys may add fields or replace tags, but not the core fields above.
+  for (const [key, value] of Object.entries(config['template.frontmatter'])) {
+    if (!(key in data) || key === p.tags) {
+      data[key] = value;
+    }
+  }
 
-  await vscode.workspace.fs.writeFile(uri, encoder.encode(createFrontmatterFile(data, '\n')));
+  const body = renderTemplate(config['template.body'], { title: title.trim(), date: start.trim() });
+  const text = createFrontmatterFile(data, body ? `\n${body}${body.endsWith('\n') ? '' : '\n'}` : '\n');
+  await vscode.workspace.fs.writeFile(uri, encoder.encode(text));
   await vscode.window.showTextDocument(uri);
 }
 
@@ -101,9 +116,10 @@ async function renameIdPrefix(uri: vscode.Uri, oldId: string, newId: string): Pr
  * cannot be told (both existed at startup), the user picks.
  */
 export async function fixDuplicateIds(store: PlannerStore): Promise<void> {
+  const lang = getLang();
   const duplicates = store.duplicateIds();
   if (duplicates.size === 0) {
-    void vscode.window.showInformationMessage('Mark Planner: 重複しているIDはありません。');
+    void vscode.window.showInformationMessage(t(lang, 'msg.noDuplicates'));
     return;
   }
   const taken = store.takenIds();
@@ -115,7 +131,7 @@ export async function fixDuplicateIds(store: PlannerStore): Promise<void> {
     if (store.creationOrder(sorted[1].key) === store.creationOrder(keep.key)) {
       const picked = await vscode.window.showQuickPick(
         sorted.map((item) => ({ label: item.title, description: item.path, item })),
-        { placeHolder: `ID「${id}」を維持するファイルを選んでください（他のファイルには新しいIDを振ります）` },
+        { placeHolder: t(lang, 'msg.pickKeep', id) },
       );
       if (!picked) {
         continue;
@@ -132,6 +148,6 @@ export async function fixDuplicateIds(store: PlannerStore): Promise<void> {
     }
   }
   if (count > 0) {
-    void vscode.window.showInformationMessage(`Mark Planner: ${count} 件のIDを振り直しました。`);
+    void vscode.window.showInformationMessage(t(lang, 'msg.reassigned', count));
   }
 }

@@ -1,5 +1,7 @@
 import * as vscode from 'vscode';
 import { createItem, fixDuplicateIds } from './commands';
+import { getLang } from './config';
+import { t } from './i18n';
 import { PlannerPanel } from './panel';
 import { PlannerStore } from './store';
 
@@ -9,6 +11,7 @@ export function activate(context: vscode.ExtensionContext) {
     store,
     vscode.commands.registerCommand('markPlanner.openCalendar', () => PlannerPanel.show(context, store, 'calendar')),
     vscode.commands.registerCommand('markPlanner.openGantt', () => PlannerPanel.show(context, store, 'gantt')),
+    vscode.commands.registerCommand('markPlanner.openSettings', () => PlannerPanel.show(context, store, 'settings')),
     vscode.commands.registerCommand('markPlanner.newItem', () => createItem(store)),
     vscode.commands.registerCommand('markPlanner.fixDuplicateIds', () => fixDuplicateIds(store)),
   );
@@ -21,9 +24,10 @@ export function activate(context: vscode.ExtensionContext) {
     if (fresh.length === 0) {
       return;
     }
+    const lang = getLang();
     const action = await vscode.window.showWarningMessage(
-      `Mark Planner: IDが重複しています (${fresh.join(', ')})。ファイルをコピーした場合などに起こります。`,
-      'IDを振り直す',
+      t(lang, 'msg.duplicateWarning', fresh.join(', ')),
+      t(lang, 'msg.reassignAction'),
     );
     if (action) {
       await fixDuplicateIds(store);

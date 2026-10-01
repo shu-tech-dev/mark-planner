@@ -1,7 +1,7 @@
 {
   "name": "mark-planner",
-  "displayName": "Mark Planner",
-  "description": "Markdownファイル（frontmatter）で管理する予定・タスクをカレンダーとガントチャートで表示します",
+  "displayName": "%displayName%",
+  "description": "%description%",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.95.0"
@@ -14,22 +14,27 @@
     "commands": [
       {
         "command": "markPlanner.openCalendar",
-        "title": "カレンダーを開く",
+        "title": "%command.openCalendar%",
         "category": "Mark Planner"
       },
       {
         "command": "markPlanner.openGantt",
-        "title": "ガントチャートを開く",
+        "title": "%command.openGantt%",
+        "category": "Mark Planner"
+      },
+      {
+        "command": "markPlanner.openSettings",
+        "title": "%command.openSettings%",
         "category": "Mark Planner"
       },
       {
         "command": "markPlanner.newItem",
-        "title": "新規タスク/予定",
+        "title": "%command.newItem%",
         "category": "Mark Planner"
       },
       {
         "command": "markPlanner.fixDuplicateIds",
-        "title": "重複IDを振り直す",
+        "title": "%command.fixDuplicateIds%",
         "category": "Mark Planner"
       }
     ],
@@ -39,22 +44,39 @@
         "markPlanner.include": {
           "type": "string",
           "default": "**/*.md",
-          "description": "読み込むMarkdownファイルのglob"
+          "description": "%config.include%",
+          "order": 0
         },
         "markPlanner.exclude": {
           "type": "string",
           "default": "**/node_modules/**",
-          "description": "除外するファイルのglob"
+          "description": "%config.exclude%",
+          "order": 1
         },
         "markPlanner.newItemFolder": {
           "type": "string",
           "default": "planner",
-          "description": "新規作成したファイルの保存先（ワークスペース相対）"
+          "description": "%config.newItemFolder%",
+          "order": 2
+        },
+        "markPlanner.template.body": {
+          "type": "string",
+          "default": "",
+          "editPresentation": "multilineText",
+          "markdownDescription": "%config.template.body%",
+          "order": 3
+        },
+        "markPlanner.template.frontmatter": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "%config.template.frontmatter%",
+          "order": 4
         },
         "markPlanner.properties": {
           "type": "object",
           "default": {},
-          "markdownDescription": "frontmatterのキー名の読み替え。例: `{\"end\": \"due\"}`",
+          "markdownDescription": "%config.properties%",
+          "additionalProperties": false,
           "properties": {
             "id": {
               "type": "string"
@@ -83,7 +105,141 @@
             "depends": {
               "type": "string"
             }
-          }
+          },
+          "order": 5
+        },
+        "markPlanner.statuses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "color"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "%config.statuses.name%"
+              },
+              "label": {
+                "type": "string",
+                "description": "%config.statuses.label%"
+              },
+              "color": {
+                "type": "string",
+                "format": "color",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "%config.statuses.color%"
+              },
+              "progress": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "%config.statuses.progress%"
+              },
+              "done": {
+                "type": "boolean",
+                "description": "%config.statuses.done%"
+              }
+            }
+          },
+          "markdownDescription": "%config.statuses%",
+          "order": 6,
+          "default": [
+            {
+              "name": "todo",
+              "color": "#3794ff",
+              "progress": 0,
+              "done": false
+            },
+            {
+              "name": "doing",
+              "color": "#d18616",
+              "progress": 50,
+              "done": false
+            },
+            {
+              "name": "done",
+              "color": "#888888",
+              "progress": 100,
+              "done": true
+            }
+          ]
+        },
+        "markPlanner.eventColor": {
+          "type": "string",
+          "format": "color",
+          "default": "#b180d7",
+          "description": "%config.eventColor%",
+          "order": 7
+        },
+        "markPlanner.calendarView": {
+          "type": "string",
+          "enum": [
+            "month",
+            "week",
+            "day"
+          ],
+          "default": "month",
+          "description": "%config.calendarView%",
+          "order": 8
+        },
+        "markPlanner.weekStart": {
+          "type": "integer",
+          "enum": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "default": 0,
+          "description": "%config.weekStart%",
+          "enumItemLabels": [
+            "%weekday.0%",
+            "%weekday.1%",
+            "%weekday.2%",
+            "%weekday.3%",
+            "%weekday.4%",
+            "%weekday.5%",
+            "%weekday.6%"
+          ],
+          "order": 9
+        },
+        "markPlanner.ganttViewMode": {
+          "type": "string",
+          "enum": [
+            "Day",
+            "Week",
+            "Month"
+          ],
+          "default": "Day",
+          "description": "%config.ganttViewMode%",
+          "order": 10
+        },
+        "markPlanner.hideDone": {
+          "type": "boolean",
+          "default": false,
+          "description": "%config.hideDone%",
+          "order": 11
+        },
+        "markPlanner.language": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "ja",
+            "en"
+          ],
+          "default": "auto",
+          "description": "%config.language%",
+          "enumDescriptions": [
+            "%config.language.auto%",
+            "日本語",
+            "English"
+          ],
+          "order": 12
         }
       }
     }

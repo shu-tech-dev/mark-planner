@@ -40,18 +40,28 @@ depends: [p0q7z4]
 
 ## コマンド
 
-- `Mark Planner: カレンダーを開く` / `ガントチャートを開く`
+- `Mark Planner: カレンダーを開く` / `ガントチャートを開く` / `設定を開く`
 - `Mark Planner: 新規タスク/予定` — `planner/<id>-タイトル.md` を作成
 - `Mark Planner: 重複IDを振り直す` — コピー側に新しいIDを振り、ファイル名の頭のIDも付け替える
 
 ## 設定
 
+パネル右上の「⚙ 設定」タブ（またはコマンド `Mark Planner: 設定を開く`）で変更できます。保存先はワークスペース設定（`.vscode/settings.json`）で、VS Code 標準の設定画面からも同じ値を編集できます。
+
 | キー | 既定値 | 説明 |
 |---|---|---|
-| `markPlanner.include` | `**/*.md` | 読み込むファイル |
-| `markPlanner.exclude` | `**/node_modules/**` | 除外するファイル |
+| `markPlanner.include` / `exclude` | `**/*.md` / `**/node_modules/**` | 読み込む／除外するファイル |
 | `markPlanner.newItemFolder` | `planner` | 新規ファイルの保存先 |
+| `markPlanner.template.body` | `""` | 新規ファイルの本文。`{{title}}` `{{date}}` を置換 |
+| `markPlanner.template.frontmatter` | `{}` | 新規ファイルに追加する frontmatter |
 | `markPlanner.properties` | `{}` | キー名の読み替え（例: `{"end": "due"}`） |
+| `markPlanner.statuses` | todo / doing / done | ステータスの値・表示名・色・進捗率・完了扱い。先頭が新規作成時の初期値 |
+| `markPlanner.eventColor` | `#b180d7` | `type: event` の色 |
+| `markPlanner.calendarView` | `month` | カレンダーの初期表示 |
+| `markPlanner.weekStart` | `0`（日曜） | 週の開始曜日 |
+| `markPlanner.ganttViewMode` | `Day` | ガントの初期スケール |
+| `markPlanner.hideDone` | `false` | 完了扱いのタスクを表示しない |
+| `markPlanner.language` | `auto` | 画面と通知の言語（`auto` / `ja` / `en`）。コマンド名と標準設定画面の文言は VS Code の表示言語に従います |
 
 ## 開発
 

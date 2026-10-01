@@ -1,5 +1,6 @@
 import * as assert from 'node:assert/strict';
 import * as vscode from 'vscode';
+import { getConfig, updateSetting } from '../../src/config';
 import type { PlannerStore } from '../../src/store';
 
 async function waitFor(check: () => boolean, label: string) {
@@ -53,4 +54,29 @@ export async function run(): Promise<void> {
 
   await vscode.commands.executeCommand('markPlanner.openCalendar');
   console.log('ok: calendar panel opens');
+
+  // Settings are written to the workspace (.vscode/settings.json).
+  const statuses = [
+    { name: '未着手', color: '#123456', progress: 0, done: false },
+    { name: '完了', color: '#654321', progress: 100, done: true },
+  ];
+  await updateSetting('statuses', statuses);
+  await updateSetting('language', 'en');
+  const settingsJson = JSON.parse(await read('.vscode/settings.json'));
+  assert.deepEqual(settingsJson['markPlanner.statuses'], statuses);
+  assert.equal(settingsJson['markPlanner.language'], 'en');
+  assert.deepEqual(getConfig().statuses, statuses);
+  console.log('ok: updateSetting writes workspace settings');
+
+  await updateSetting('language', undefined);
+  assert.equal(JSON.parse(await read('.vscode/settings.json'))['markPlanner.language'], undefined);
+  assert.equal(getConfig().language, 'auto');
+  console.log('ok: reset removes the workspace value');
+
+  await vscode.workspace.getConfiguration('markPlanner').update('include', 'planner/**/*.md', vscode.ConfigurationTarget.Workspace);
+  await waitFor(() => store.getItems().every((i) => i.path.startsWith('planner/')), 'reindex after include change');
+  console.log('ok: store reloads after settings change');
+
+  await vscode.commands.executeCommand('markPlanner.openSettings');
+  console.log('ok: settings panel opens');
 }
