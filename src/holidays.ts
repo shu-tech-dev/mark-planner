@@ -1,6 +1,6 @@
 import holidayData from '@holiday-jp/holiday_jp/lib/holidays';
 import type { PlannerItem } from './model';
-import type { Lang } from './settings';
+import type { Lang, PlannerSettings } from './settings';
 
 export interface DayLabel {
   /** `YYYY-MM-DD` */
@@ -21,6 +21,21 @@ export function japaneseHolidaysBetween(from: string, to: string, lang: Lang): D
   return Object.keys(japanese)
     .filter((date) => date >= from && date <= to)
     .map((date) => ({ date, name: japaneseHoliday(date, lang)! }));
+}
+
+/**
+ * Weekend color for `date`, or undefined on working days. Shown holidays take
+ * precedence, so a Saturday holiday gets no weekend color (only the holiday's).
+ */
+export function weekendColor(
+  date: string,
+  dayOfWeek: number,
+  settings: Pick<PlannerSettings, 'showHolidays' | 'weekendColors'>,
+): string | undefined {
+  if (settings.showHolidays && japanese[date]) {
+    return undefined;
+  }
+  return settings.weekendColors[String(dayOfWeek)];
 }
 
 /** Every date from `start` to `end` inclusive (`YYYY-MM-DD`; times are ignored). */

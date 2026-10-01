@@ -1,6 +1,6 @@
 import Gantt from 'frappe-gantt';
 import { buildTree, TreeRow } from '../src/hierarchy';
-import { DayLabel, japaneseHolidaysBetween, vacationDays } from '../src/holidays';
+import { DayLabel, japaneseHolidaysBetween, vacationDays, weekendColor } from '../src/holidays';
 import { t } from '../src/i18n';
 import type { PlannerItem } from '../src/model';
 import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
@@ -27,22 +27,27 @@ function statusStyles(settings: PlannerSettings): string {
   return rules.join('\n');
 }
 
+type DayMatcher = DayLabel | ((d: Date) => boolean);
+
 /**
- * frappe-gantt's `holidays` option maps a fill color to the days to shade
- * (`'weekend'` or `{date, name}` labels shown on hover).
+ * frappe-gantt's `holidays` option maps a fill color to the days to shade:
+ * `{date, name}` entries (name shown on hover) and/or a matcher function.
  */
 function dayShading(items: PlannerItem[], rows: TreeRow[], settings: PlannerSettings, lang: Lang) {
-  const holidays: Record<string, 'weekend' | DayLabel[]> = {};
+  const holidays: Record<string, DayMatcher[]> = {};
   // Keys are colors; pad with spaces so equal colors don't overwrite each other.
-  const add = (color: string, days: 'weekend' | DayLabel[]) => {
+  const add = (color: string, days: DayMatcher[]) => {
     let key = color;
     while (key in holidays) {
       key += ' ';
     }
     holidays[key] = days;
   };
-  if (settings.weekendDays.length) {
-    add('var(--g-weekend-highlight-color)', 'weekend');
+  for (const [day, color] of Object.entries(settings.weekendColors)) {
+    // A holiday on a weekend is shaded as a holiday only.
+    add(translucent(color), [
+      (d: Date) => d.getDay() === Number(day) && weekendColor(formatDate(d), d.getDay(), settings) !== undefined,
+    ]);
   }
   if (settings.showHolidays && rows.length) {
     // The chart pads (and scrolls) beyond the tasks, so cover a generous range.
@@ -54,10 +59,7 @@ function dayShading(items: PlannerItem[], rows: TreeRow[], settings: PlannerSett
   if (vacations.length) {
     add(translucent(settings.vacationColor), vacations);
   }
-  return {
-    holidays,
-    is_weekend: (d: Date) => settings.weekendDays.includes(d.getDay()),
-  };
+  return { holidays };
 }
 
 export class GanttView {

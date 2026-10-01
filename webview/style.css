@@ -63,7 +63,6 @@ main { flex: 1; min-height: 0; padding: 12px; }
 .fc-event.is-done { opacity: 0.5; text-decoration: line-through; }
 
 /* Days off */
-.fc .mp-weekend { background: var(--vscode-sideBar-background); }
 .fc .mp-holiday .fc-daygrid-day-number,
 .fc .fc-col-header-cell.mp-holiday,
 .fc .mp-holiday .fc-col-header-cell-cushion { color: var(--mp-holiday-color); font-weight: bold; }
@@ -93,7 +92,6 @@ main { flex: 1; min-height: 0; padding: 12px; }
   --g-border-color: var(--vscode-panel-border);
   --g-popup-actions: var(--vscode-editorWidget-background);
   --g-today-highlight: var(--vscode-charts-red);
-  --g-weekend-highlight-color: var(--vscode-sideBar-background);
   --g-actions-background: var(--vscode-button-secondaryBackground);
   background: var(--vscode-editor-background);
 }
@@ -172,6 +170,8 @@ main { flex: 1; min-height: 0; padding: 12px; }
 .settings .error { color: var(--vscode-errorForeground); margin: 4px 0; }
 .settings .weekdays { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 3px; }
 .settings .weekdays label { display: inline-flex; align-items: center; gap: 4px; }
+.settings .weekdays input[type='color'] { width: 32px; height: 22px; }
+.settings .weekdays input[type='color']:disabled { opacity: 0.3; }
 .settings .properties {
   display: grid;
   grid-template-columns: minmax(140px, 220px) 1fr;

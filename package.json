@@ -232,19 +232,58 @@
           "description": "%config.maxEventsPerDay%",
           "order": 12
         },
-        "markPlanner.weekendDays": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 6
+        "markPlanner.weekendColors": {
+          "type": "object",
+          "default": {
+            "0": "#f14c4c",
+            "6": "#3794ff"
           },
-          "default": [
-            0,
-            6
-          ],
-          "uniqueItems": true,
-          "description": "%config.weekendDays%",
+          "additionalProperties": false,
+          "properties": {
+            "0": {
+              "type": "string",
+              "format": "color",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "%weekday.0%"
+            },
+            "1": {
+              "type": "string",
+              "format": "color",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "%weekday.1%"
+            },
+            "2": {
+              "type": "string",
+              "format": "color",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "%weekday.2%"
+            },
+            "3": {
+              "type": "string",
+              "format": "color",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "%weekday.3%"
+            },
+            "4": {
+              "type": "string",
+              "format": "color",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "%weekday.4%"
+            },
+            "5": {
+              "type": "string",
+              "format": "color",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "%weekday.5%"
+            },
+            "6": {
+              "type": "string",
+              "format": "color",
+              "pattern": "^#[0-9a-fA-F]{6}$",
+              "description": "%weekday.6%"
+            }
+          },
+          "markdownDescription": "%config.weekendColors%",
           "order": 13
         },
         "markPlanner.showHolidays": {

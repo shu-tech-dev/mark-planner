@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { datesBetween, japaneseHoliday, japaneseHolidaysBetween, vacationDays } from '../src/holidays';
+import { datesBetween, weekendColor, japaneseHoliday, japaneseHolidaysBetween, vacationDays } from '../src/holidays';
 import { toPlannerItem } from '../src/model';
-import { normalizeSettings } from '../src/settings';
+import { DEFAULT_SETTINGS, normalizeSettings } from '../src/settings';
 
 test('japanese holidays', () => {
   assert.equal(japaneseHoliday('2026-11-03', 'ja'), '文化の日');
@@ -34,9 +34,23 @@ test('vacationDays expands holiday items only', () => {
   ]);
 });
 
-test('weekendDays are normalized', () => {
-  assert.deepEqual(normalizeSettings({ weekendDays: [6, 0, 6, 7, 'x'] }).weekendDays, [0, 6]);
-  assert.deepEqual(normalizeSettings({ weekendDays: [] }).weekendDays, []);
-  assert.deepEqual(normalizeSettings({ weekendDays: 'sat' }).weekendDays, [0, 6]);
+test('weekendColors are normalized', () => {
+  assert.deepEqual(DEFAULT_SETTINGS.weekendColors, { '0': '#f14c4c', '6': '#3794ff' });
+  assert.deepEqual(
+    normalizeSettings({ weekendColors: { '6': '#0000ff', '0': '#ff0000', '7': '#000000', '3': 'blue' } }).weekendColors,
+    { '0': '#ff0000', '6': '#0000ff' },
+  );
+  assert.deepEqual(normalizeSettings({ weekendColors: {} }).weekendColors, {});
+  assert.deepEqual(normalizeSettings({ weekendColors: [0, 6] }).weekendColors, DEFAULT_SETTINGS.weekendColors);
   assert.equal(normalizeSettings({ showHolidays: false }).showHolidays, false);
+});
+
+test('weekendColor: holidays take precedence', () => {
+  const s = DEFAULT_SETTINGS;
+  assert.equal(weekendColor('2026-10-10', 6, s), '#3794ff'); // Saturday
+  assert.equal(weekendColor('2026-10-11', 0, s), '#f14c4c'); // Sunday
+  assert.equal(weekendColor('2026-10-13', 2, s), undefined); // Tuesday
+  // 2028-04-29 (昭和の日) is a Saturday: holiday color only, unless holidays are hidden.
+  assert.equal(weekendColor('2028-04-29', 6, s), undefined);
+  assert.equal(weekendColor('2028-04-29', 6, { ...s, showHolidays: false }), '#3794ff');
 });

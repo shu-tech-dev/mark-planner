@@ -32,9 +32,9 @@
   "weekday.4": "Thursday",
   "weekday.5": "Friday",
   "weekday.6": "Saturday",
-  "config.weekendDays": "Days of the week treated as days off (0 = Sunday, 6 = Saturday).",
   "config.showHolidays": "Show Japanese public holidays.",
   "config.holidayColor": "Color of public holidays.",
   "config.vacationColor": "Color of your vacation days (type: holiday).",
-  "config.maxEventsPerDay": "Events shown per day in the calendar before collapsing into \"+N more\". 0 shows all events and lets day cells grow."
+  "config.maxEventsPerDay": "Events shown per day in the calendar before collapsing into \"+N more\". 0 shows all events and lets day cells grow.",
+  "config.weekendColors": "Weekdays treated as days off and their background colors. Keys are `0` (Sunday) to `6` (Saturday), e.g. `{\"0\": \"#f14c4c\", \"6\": \"#3794ff\"}`."
 }

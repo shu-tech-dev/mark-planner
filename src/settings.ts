@@ -27,8 +27,8 @@ export interface PlannerSettings {
   hideDone: boolean;
   /** Events shown per day cell before collapsing into "+N more"; 0 = no limit (cells grow). */
   maxEventsPerDay: number;
-  /** Days of week treated as non-working (0 = Sunday). */
-  weekendDays: number[];
+  /** Days of week treated as days off, mapped to their color (`"0"` = Sunday … `"6"` = Saturday). */
+  weekendColors: Record<string, string>;
   /** Show Japanese public holidays. */
   showHolidays: boolean;
   holidayColor: string;
@@ -58,7 +58,7 @@ export const DEFAULT_SETTINGS: PlannerSettings = {
   weekStart: 0,
   hideDone: false,
   maxEventsPerDay: 0,
-  weekendDays: [0, 6],
+  weekendColors: { '0': '#f14c4c', '6': '#3794ff' },
   showHolidays: true,
   holidayColor: '#f14c4c',
   vacationColor: '#2ea043',
@@ -128,9 +128,13 @@ export function normalizeSettings(raw: Partial<Record<SettingKey, unknown>>): Pl
     maxEventsPerDay: Number.isInteger(raw.maxEventsPerDay) && (raw.maxEventsPerDay as number) >= 0
       ? (raw.maxEventsPerDay as number)
       : d.maxEventsPerDay,
-    weekendDays: Array.isArray(raw.weekendDays)
-      ? [...new Set(raw.weekendDays.filter((d): d is number => Number.isInteger(d) && d >= 0 && d <= 6))].sort()
-      : d.weekendDays,
+    weekendColors: isRecord(raw.weekendColors)
+      ? Object.fromEntries(
+          Object.entries(raw.weekendColors)
+            .filter((e): e is [string, string] => /^[0-6]$/.test(e[0]) && typeof e[1] === 'string' && COLOR_RE.test(e[1]))
+            .sort(([a], [b]) => a.localeCompare(b)),
+        )
+      : d.weekendColors,
     showHolidays: raw.showHolidays !== false,
     holidayColor: color(raw.holidayColor, d.holidayColor),
     vacationColor: color(raw.vacationColor, d.vacationColor),

@@ -40,8 +40,8 @@ depends: [p0q7z4]
 
 ## 休日・祝日・休暇
 
-- **週末:** 設定した曜日（既定は土日）を、カレンダーとガントで薄く塗ります。
-- **祝日:** 日本の祝日（振替休日・国民の休日を含む、1970〜2050年）を祝日の色で塗り、カレンダーには祝日名も出します。データは [@holiday-jp/holiday_jp](https://github.com/holiday-jp/holiday_jp-js) を同梱しており、通信はしません。
+- **週末:** 設定した曜日をその曜日の色で塗ります（既定は土曜=青、日曜=赤）。カレンダーでは日付の数字と曜日の見出しも同じ色になります。
+- **祝日:** 日本の祝日（振替休日・国民の休日を含む、1970〜2050年）を祝日の色（既定は赤）で塗り、土日と重なる場合は祝日を優先します。カレンダーには祝日名も出します。データは [@holiday-jp/holiday_jp](https://github.com/holiday-jp/holiday_jp-js) を同梱しており、通信はしません。
 - **休暇:** `type: holiday` のファイルが自分の休暇です。カレンダーではバー（ドラッグで日付変更可）と日の塗りで、ガントでは列の塗りで表示します。「＋ 新規」で「休暇」を選ぶと作れます。
 
 ```markdown
@@ -78,7 +78,7 @@ end: 2026-10-20
 | `markPlanner.ganttViewMode` | `Day` | ガントの初期スケール |
 | `markPlanner.hideDone` | `false` | 完了扱いのタスクを表示しない |
 | `markPlanner.maxEventsPerDay` | `0`（無制限） | カレンダーで1日に表示する件数。0 なら全件表示してマスを縦に伸ばし、n なら超えた分を「他 N 件」にまとめる |
-| `markPlanner.weekendDays` | `[0, 6]`（日・土） | 休日として塗る曜日 |
+| `markPlanner.weekendColors` | `{"0": "#f14c4c", "6": "#3794ff"}`（日=赤, 土=青） | 休日として塗る曜日と色 |
 | `markPlanner.showHolidays` | `true` | 日本の祝日を表示する |
 | `markPlanner.holidayColor` / `vacationColor` | `#f14c4c` / `#2ea043` | 祝日／休暇の色 |
 | `markPlanner.language` | `auto` | 画面と通知の言語（`auto` / `ja` / `en`）。コマンド名と標準設定画面の文言は VS Code の表示言語に従います |

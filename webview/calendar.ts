@@ -4,7 +4,7 @@ import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import jaLocale from '@fullcalendar/core/locales/ja';
 import { ancestorTitles, parentMap } from '../src/hierarchy';
-import { japaneseHoliday, japaneseHolidaysBetween, vacationDays } from '../src/holidays';
+import { japaneseHoliday, japaneseHolidaysBetween, vacationDays, weekendColor } from '../src/holidays';
 import type { PlannerItem } from '../src/model';
 import { CalendarView as CalendarViewSetting, Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { translucent } from './colors';
@@ -20,6 +20,7 @@ const VIEW_NAMES: Record<CalendarViewSetting, string> = {
 export class CalendarView {
   private readonly calendar: Calendar;
   private appliedView: CalendarViewSetting | undefined;
+  private readonly weekendStyle = document.head.appendChild(document.createElement('style'));
 
   constructor(el: HTMLElement) {
     this.calendar = new Calendar(el, {
@@ -55,25 +56,32 @@ export class CalendarView {
     // 0: day cells grow to fit every event; n: show n, then "+N more".
     this.calendar.setOption('dayMaxEvents', settings.maxEventsPerDay || false);
     document.documentElement.style.setProperty('--mp-holiday-color', settings.holidayColor);
+    this.weekendStyle.textContent = weekendStyles(settings);
 
-    // Day cells: weekend shading, holiday/vacation day numbers in color.
+    // Day cells: weekend colors, holiday/vacation day numbers. A holiday wins over
+    // its weekday color (its own background comes from the holiday event).
     const vacations = new Set(vacationDays(items).map((d) => d.date));
-    const dayClasses = ({ date }: { date: Date }) => {
+    const dayClasses = ({ date }: { date: Date }, withHolidays = true) => {
       const iso = formatDate(date);
       const classes: string[] = [];
-      if (settings.weekendDays.includes(date.getDay())) {
-        classes.push('mp-weekend');
-      }
-      if (settings.showHolidays && japaneseHoliday(iso, lang)) {
+      if (!withHolidays) {
+        // Weekday header: color by day of week only.
+        if (settings.weekendColors[String(date.getDay())]) {
+          classes.push(`mp-wd-${date.getDay()}`);
+        }
+      } else if (settings.showHolidays && japaneseHoliday(iso, lang)) {
         classes.push('mp-holiday');
+      } else if (weekendColor(iso, date.getDay(), settings)) {
+        classes.push(`mp-wd-${date.getDay()}`);
       }
-      if (vacations.has(iso)) {
+      if (withHolidays && vacations.has(iso)) {
         classes.push('mp-vacation');
       }
       return classes;
     };
-    this.calendar.setOption('dayCellClassNames', dayClasses);
-    this.calendar.setOption('dayHeaderClassNames', dayClasses);
+    this.calendar.setOption('dayCellClassNames', (arg) => dayClasses(arg));
+    // The month view header stands for a weekday, not a date.
+    this.calendar.setOption('dayHeaderClassNames', (arg) => dayClasses(arg, arg.view.type !== 'dayGridMonth'));
     // Only follow the setting when it changes, so the user's own view switches stick.
     if (this.appliedView !== settings.calendarView) {
       this.appliedView = settings.calendarView;
@@ -118,6 +126,17 @@ export class CalendarView {
     }
     this.calendar.updateSize();
   }
+}
+
+function weekendStyles(settings: PlannerSettings): string {
+  return Object.entries(settings.weekendColors)
+    .map(
+      ([day, color]) => `
+.fc .mp-wd-${day} { background: ${translucent(color)}; }
+.fc .mp-wd-${day} .fc-daygrid-day-number,
+.fc .fc-col-header-cell.mp-wd-${day} .fc-col-header-cell-cushion { color: ${color}; }`,
+    )
+    .join('\n');
 }
 
 function toEvent(item: PlannerItem, parents: Map<PlannerItem, PlannerItem>, settings: PlannerSettings): EventInput {

@@ -110,7 +110,7 @@ export class SettingsView {
         this.section(
           'settings.section.holidays',
           h('p', { class: 'help' }, this.tr('settings.holidays.help')),
-          this.weekdaysField('weekendDays', 'settings.weekendDays'),
+          this.weekendColorsField('weekendColors', 'settings.weekendColors', defaults),
           this.checkboxField('showHolidays', 'settings.showHolidays'),
           this.colorField('holidayColor', 'settings.holidayColor'),
           this.colorField('vacationColor', 'settings.vacationColor'),
@@ -237,31 +237,54 @@ export class SettingsView {
     return this.row(key, label, input);
   }
 
-  /** Seven checkboxes, starting from the configured first day of the week. */
-  private weekdaysField(key: SettingKey, label: MessageKey) {
+  /**
+   * One "day off" checkbox and color per weekday, starting from the configured
+   * first day of the week. Unchecked days keep their last color for re-enabling.
+   */
+  private weekendColorsField(key: SettingKey, label: MessageKey, defaults: PlannerSettings) {
+    const days = [0, 1, 2, 3, 4, 5, 6];
+    const colors = new Map(days.map((d) => [d, defaults.weekendColors[String(d)] ?? '#888888']));
     const boxes = new Map<number, HTMLInputElement>();
+    const pickers = new Map<number, HTMLInputElement>();
     const group = h('div', { class: 'weekdays', role: 'group' });
-    const order = (first: number) => [0, 1, 2, 3, 4, 5, 6].map((i) => (first + i) % 7);
+
+    const commit = () =>
+      save(
+        key,
+        Object.fromEntries(days.filter((d) => boxes.get(d)!.checked).map((d) => [String(d), pickers.get(d)!.value])),
+      );
+    for (const d of days) {
+      const box = h('input', { type: 'checkbox', 'aria-label': this.tr(`weekday.${d}` as MessageKey) });
+      const picker = h('input', { type: 'color', value: colors.get(d) });
+      box.addEventListener('change', () => {
+        picker.disabled = !box.checked;
+        commit();
+      });
+      picker.addEventListener('change', () => {
+        colors.set(d, picker.value);
+        commit();
+      });
+      boxes.set(d, box);
+      pickers.set(d, picker);
+    }
     const layout = (first: number) =>
       group.replaceChildren(
-        ...order(first).map((d) => h('label', {}, boxes.get(d)!, this.tr(`weekday.${d}` as MessageKey))),
+        ...days
+          .map((i) => (first + i) % 7)
+          .map((d) => h('label', {}, boxes.get(d)!, this.tr(`weekday.${d}` as MessageKey), pickers.get(d)!)),
       );
-    for (let d = 0; d < 7; d++) {
-      const box = h('input', { type: 'checkbox', value: String(d) });
-      box.addEventListener('change', () =>
-        save(
-          key,
-          [...boxes].filter(([, b]) => b.checked).map(([day]) => day),
-        ),
-      );
-      boxes.set(d, box);
-    }
     layout(0);
     this.bind(key, group, (s) => {
       layout(s.weekStart);
-      const days = s[key] as number[];
-      for (const [d, box] of boxes) {
-        box.checked = days.includes(d);
+      const current = s[key] as Record<string, string>;
+      for (const d of days) {
+        const color = current[String(d)];
+        if (color) {
+          colors.set(d, color);
+        }
+        boxes.get(d)!.checked = !!color;
+        pickers.get(d)!.value = colors.get(d)!;
+        pickers.get(d)!.disabled = !color;
       }
     });
     return this.row(key, label, group);
