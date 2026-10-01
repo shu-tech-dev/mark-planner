@@ -1,0 +1,115 @@
+{
+  "name": "mark-planner",
+  "displayName": "Mark Planner",
+  "description": "Markdownファイル（frontmatter）で管理する予定・タスクをカレンダーとガントチャートで表示します",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "markPlanner.openCalendar",
+        "title": "カレンダーを開く",
+        "category": "Mark Planner"
+      },
+      {
+        "command": "markPlanner.openGantt",
+        "title": "ガントチャートを開く",
+        "category": "Mark Planner"
+      },
+      {
+        "command": "markPlanner.newItem",
+        "title": "新規タスク/予定",
+        "category": "Mark Planner"
+      },
+      {
+        "command": "markPlanner.fixDuplicateIds",
+        "title": "重複IDを振り直す",
+        "category": "Mark Planner"
+      }
+    ],
+    "configuration": {
+      "title": "Mark Planner",
+      "properties": {
+        "markPlanner.include": {
+          "type": "string",
+          "default": "**/*.md",
+          "description": "読み込むMarkdownファイルのglob"
+        },
+        "markPlanner.exclude": {
+          "type": "string",
+          "default": "**/node_modules/**",
+          "description": "除外するファイルのglob"
+        },
+        "markPlanner.newItemFolder": {
+          "type": "string",
+          "default": "planner",
+          "description": "新規作成したファイルの保存先（ワークスペース相対）"
+        },
+        "markPlanner.properties": {
+          "type": "object",
+          "default": {},
+          "markdownDescription": "frontmatterのキー名の読み替え。例: `{\"end\": \"due\"}`",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string"
+            },
+            "start": {
+              "type": "string"
+            },
+            "end": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "string"
+            },
+            "parent": {
+              "type": "string"
+            },
+            "depends": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "node build.mjs --production",
+    "build": "node build.mjs",
+    "watch": "node build.mjs --watch",
+    "typecheck": "tsc",
+    "test": "node --import tsx --test test/*.test.ts",
+    "test:integration": "node build.mjs --integration && tsx test/integration/run.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/vscode": "^1.95.0",
+    "@vscode/test-electron": "^3.1.0",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.6.0"
+  },
+  "dependencies": {
+    "@fullcalendar/core": "^6.1.21",
+    "@fullcalendar/daygrid": "^6.1.21",
+    "@fullcalendar/interaction": "^6.1.21",
+    "@fullcalendar/timegrid": "^6.1.21",
+    "frappe-gantt": "^1.2.2",
+    "yaml": "^2.9.1"
+  }
+}

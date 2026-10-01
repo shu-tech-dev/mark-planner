@@ -1,0 +1,91 @@
+@import '../node_modules/frappe-gantt/dist/frappe-gantt.css';
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+}
+
+body { display: flex; flex-direction: column; }
+
+.toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+.toolbar .spacer { flex: 1; }
+.toolbar button {
+  padding: 4px 12px;
+  border: 1px solid var(--vscode-button-border, transparent);
+  border-radius: 2px;
+  color: var(--vscode-button-secondaryForeground);
+  background: var(--vscode-button-secondaryBackground);
+  cursor: pointer;
+}
+.toolbar button:hover { background: var(--vscode-button-secondaryHoverBackground); }
+.toolbar button.active, #new-item {
+  color: var(--vscode-button-foreground);
+  background: var(--vscode-button-background);
+}
+
+main { flex: 1; min-height: 0; padding: 12px; }
+.view { height: 100%; }
+.view[hidden] { display: none; }
+#gantt { overflow: auto; }
+.empty { opacity: 0.7; }
+
+/* ---- FullCalendar theming ---- */
+.fc {
+  --fc-border-color: var(--vscode-panel-border);
+  --fc-page-bg-color: var(--vscode-editor-background);
+  --fc-neutral-bg-color: var(--vscode-sideBar-background);
+  --fc-today-bg-color: var(--vscode-editor-selectionHighlightBackground);
+  --fc-button-bg-color: var(--vscode-button-secondaryBackground);
+  --fc-button-border-color: transparent;
+  --fc-button-text-color: var(--vscode-button-secondaryForeground);
+  --fc-button-hover-bg-color: var(--vscode-button-secondaryHoverBackground);
+  --fc-button-hover-border-color: transparent;
+  --fc-button-active-bg-color: var(--vscode-button-background);
+  --fc-button-active-border-color: transparent;
+  --fc-event-bg-color: var(--vscode-charts-blue);
+  --fc-event-border-color: var(--vscode-charts-blue);
+  --fc-list-event-hover-bg-color: var(--vscode-list-hoverBackground);
+}
+.fc a { color: inherit; }
+.fc .fc-daygrid-day-frame { cursor: pointer; }
+.fc .fc-popover { background: var(--vscode-editorWidget-background); }
+
+.fc-event.type-event { --fc-event-bg-color: var(--vscode-charts-purple); background: var(--vscode-charts-purple); border-color: var(--vscode-charts-purple); }
+.fc-event.status-doing { background: var(--vscode-charts-orange); border-color: var(--vscode-charts-orange); }
+.fc-event.status-done { opacity: 0.5; text-decoration: line-through; }
+.fc-daygrid-dot-event.type-event .fc-daygrid-event-dot { border-color: var(--vscode-charts-purple); }
+
+/* ---- frappe-gantt theming ---- */
+.gantt-container {
+  --g-bar-color: var(--vscode-charts-blue);
+  --g-bar-border: transparent;
+  --g-progress-color: var(--vscode-charts-green);
+  --g-arrow-color: var(--vscode-foreground);
+  --g-header-background: var(--vscode-editor-background);
+  --g-row-color: var(--vscode-editor-background);
+  --g-row-border-color: var(--vscode-panel-border);
+  --g-tick-color: var(--vscode-panel-border);
+  --g-tick-color-thick: var(--vscode-panel-border);
+  --g-text-light: var(--vscode-button-foreground);
+  --g-text-dark: var(--vscode-foreground);
+  --g-text-muted: var(--vscode-descriptionForeground);
+  --g-border-color: var(--vscode-panel-border);
+  --g-popup-actions: var(--vscode-editorWidget-background);
+  --g-today-highlight: var(--vscode-charts-red);
+  --g-weekend-highlight-color: var(--vscode-sideBar-background);
+  --g-actions-background: var(--vscode-button-secondaryBackground);
+  background: var(--vscode-editor-background);
+}
+.gantt .bar-wrapper[class*="type-event--"] .bar { fill: var(--vscode-charts-purple); }
+.gantt .bar-wrapper[class*="--status-done"] { opacity: 0.5; }
+.gantt-container .popup-wrapper { background: var(--vscode-editorWidget-background); color: var(--vscode-foreground); }
