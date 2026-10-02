@@ -7,6 +7,7 @@ import { japaneseHoliday, japaneseHolidaysBetween, vacationDays, weekendColor } 
 import type { PlannerItem } from '../src/model';
 import { CalendarView as CalendarViewSetting, Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { soft, translucent } from './colors';
+import { newItem, openItem } from './editor';
 import { addDays, formatDate, formatDateTime, isDateOnly } from './dates';
 import { itemTooltip, tooltip, TooltipContext } from './tooltip';
 import { post } from './vscode';
@@ -73,7 +74,7 @@ export class CalendarView {
       eventDisplay: 'block',
       eventClick: (info) => {
         if (info.event.display !== 'background') {
-          post({ type: 'open', key: info.event.id });
+          openItem(info.event.id, info.jsEvent);
         }
       },
       eventDrop: (info) => onChange(info.event),
@@ -91,7 +92,7 @@ export class CalendarView {
       eventMouseLeave: (info) => tooltip().hoverEnd(info.el),
       eventDragStart: () => tooltip().hide(),
       eventResizeStart: () => tooltip().hide(),
-      dateClick: (info) => post({ type: 'create', date: info.allDay ? info.dateStr : formatDateTime(info.date) }),
+      dateClick: (info) => newItem({ start: info.allDay ? info.dateStr : formatDateTime(info.date) }),
       datesSet: (arg) => {
         this.onNav({ title: arg.view.title, range: RANGE_OF[arg.view.type] });
         // Re-measure after view/month changes (row count, header).

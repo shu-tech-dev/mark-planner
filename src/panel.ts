@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
-import { createItem, createQuickTask } from './commands';
+import { applyChecks } from './checklist';
+import { createFromFields, createQuickTask, deleteItem } from './commands';
 import { getConfig, getLang, isSettingKey, settingsTarget, updateSetting } from './config';
 import { t } from './i18n';
+import { editorPatch, sanitizeFields } from './editor';
 import { moveToPatch } from './model';
 import { DEFAULT_SETTINGS } from './settings';
 import { PlannerStore } from './store';
@@ -16,7 +18,9 @@ type WebviewMessage =
   | { type: 'ready' }
   | { type: 'open'; key: string }
   | { type: 'move'; key: string; start: string; end?: string }
-  | { type: 'create'; date: string }
+  | { type: 'saveItem'; key?: string; fields: unknown; checks?: { line: number; checked: boolean }[] }
+  | { type: 'loadBody'; key: string }
+  | { type: 'deleteItem'; key: string }
   | { type: 'updateSetting'; key: string; value: unknown }
   | { type: 'patch'; key: string; field: string; value: unknown }
   | { type: 'createQuick'; title: string; parent?: string; status?: string; start?: string }
@@ -35,8 +39,22 @@ export class PlannerPanel {
     PlannerPanel.current = new PlannerPanel(context, store, view);
   }
 
+  /** Opens the panel (keeping its current view) with the new-item dialog. */
+  static newItem(context: vscode.ExtensionContext, store: PlannerStore): void {
+    const panel = PlannerPanel.current;
+    if (panel) {
+      panel.panel.reveal();
+      panel.send({ type: 'newItem' });
+      return;
+    }
+    PlannerPanel.current = new PlannerPanel(context, store, getConfig().tabOrder[0] ?? 'calendar');
+    PlannerPanel.current.send({ type: 'newItem' });
+  }
+
   private readonly panel: vscode.WebviewPanel;
   private readonly disposables: vscode.Disposable[] = [];
+  /** Messages held until the webview reports `ready`. */
+  private pending: unknown[] | undefined = [];
 
   private constructor(
     private readonly context: vscode.ExtensionContext,
@@ -79,6 +97,14 @@ export class PlannerPanel {
     void this.panel.webview.postMessage({ type: 'view', view });
   }
 
+  private send(message: unknown): void {
+    if (this.pending) {
+      this.pending.push(message);
+    } else {
+      void this.panel.webview.postMessage(message);
+    }
+  }
+
   private postItems(): void {
     void this.panel.webview.postMessage({ type: 'items', items: this.store.getItems() });
   }
@@ -97,6 +123,8 @@ export class PlannerPanel {
         this.postConfig();
         this.setView(this.view);
         this.postItems();
+        this.pending?.forEach((m) => void this.panel.webview.postMessage(m));
+        this.pending = undefined;
         break;
       case 'open':
         await vscode.window.showTextDocument(vscode.Uri.parse(message.key), { viewColumn: vscode.ViewColumn.Beside });
@@ -114,8 +142,21 @@ export class PlannerPanel {
         }
         break;
       }
-      case 'create':
-        await createItem(this.store, message.date);
+      case 'saveItem':
+        await this.saveItem(message.key, message.fields, message.checks ?? []);
+        break;
+      case 'loadBody': {
+        let body: string | undefined;
+        try {
+          body = await this.store.body(message.key);
+        } catch {
+          body = undefined;
+        }
+        void this.panel.webview.postMessage({ type: 'body', key: message.key, body });
+        break;
+      }
+      case 'deleteItem':
+        await deleteItem(this.store, message.key);
         break;
       case 'patch': {
         const patch = cellPatch(message.field, message.value, getConfig().properties);
@@ -152,6 +193,33 @@ export class PlannerPanel {
           }
         }
         break;
+    }
+  }
+
+  /** Creates (no key) or updates an item from the editor dialog. */
+  private async saveItem(key: string | undefined, raw: unknown, checks: { line: number; checked: boolean }[]): Promise<void> {
+    const lang = getLang();
+    const fields = sanitizeFields(raw);
+    if (!fields) {
+      return;
+    }
+    try {
+      if (!key) {
+        await createFromFields(this.store, fields);
+        return;
+      }
+      const item = this.store.get(key);
+      if (!item) {
+        void vscode.window.showErrorMessage(t(lang, 'editor.missing'));
+        return;
+      }
+      const patch = editorPatch(item, fields, getConfig().properties);
+      const valid = checks.filter((c) => Number.isInteger(c.line) && typeof c.checked === 'boolean');
+      if (Object.keys(patch).length || valid.length) {
+        await this.store.patch(key, patch, valid.length ? (body) => applyChecks(body, valid) : undefined);
+      }
+    } catch (e) {
+      void vscode.window.showErrorMessage(t(lang, 'msg.writeFailed', String(e)));
     }
   }
 
@@ -202,6 +270,7 @@ export class PlannerPanel {
   <div id="list" class="view"></div>
   <div id="settings" class="view"></div>
 </main>
+<div id="dialog-root"></div>
 <script nonce="${nonce}" src="${media('webview.js')}"></script>
 </body>
 </html>`;

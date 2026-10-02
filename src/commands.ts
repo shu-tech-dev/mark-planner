@@ -4,91 +4,40 @@ import { baseFileName, replaceIdPrefix, uniqueFileName } from './filename';
 import { createFrontmatterFile } from './frontmatter';
 import { generateId } from './id';
 import { t } from './i18n';
-import { ItemType, normalizeDate } from './model';
+import { EditorFields, newItemData } from './editor';
+import { normalizeDate } from './model';
 import { renderTemplate } from './settings';
 import { fileExists as exists, PlannerStore, writeFrontmatter } from './store';
 
 const encoder = new TextEncoder();
 
-function today(): string {
-  const d = new Date();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-/** Prompts for title/type and creates `<folder>/<date>-<title>.md`. */
-export async function createItem(store: PlannerStore, date?: string): Promise<void> {
-  const lang = getLang();
+/**
+ * Creates `<folder>/<id>-<title>.md` from the editor dialog's fields (or a quick
+ * add). The body comes from the `template.body` setting. Returns the new file.
+ */
+export async function createFromFields(store: PlannerStore, fields: EditorFields): Promise<vscode.Uri | undefined> {
   const root = vscode.workspace.workspaceFolders?.[0];
   if (!root) {
-    void vscode.window.showErrorMessage(t(lang, 'msg.noFolder'));
-    return;
+    void vscode.window.showErrorMessage(t(getLang(), 'msg.noFolder'));
+    return undefined;
   }
-
-  const title = await vscode.window.showInputBox({
-    prompt: t(lang, 'msg.titlePrompt'),
-    placeHolder: t(lang, 'msg.titlePlaceholder'),
-  });
-  if (!title?.trim()) {
-    return;
-  }
-  const picked = await vscode.window.showQuickPick(
-    [
-      { label: t(lang, 'msg.type.task'), type: 'task' as ItemType },
-      { label: t(lang, 'msg.type.event'), type: 'event' as ItemType },
-      { label: t(lang, 'msg.type.holiday'), type: 'holiday' as ItemType },
-    ],
-    { placeHolder: t(lang, 'msg.typePlaceholder') },
-  );
-  if (!picked) {
-    return;
-  }
-  const start =
-    date ??
-    (await vscode.window.showInputBox({
-      prompt: t(lang, 'msg.startPrompt'),
-      value: today(),
-      validateInput: (v) => (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/.test(v.trim()) ? undefined : t(lang, 'msg.invalidDate')),
-    }));
-  if (!start) {
-    return;
-  }
-
   const config = getConfig();
-  const { newItemFolder, properties: p } = config;
-  const folder = vscode.Uri.joinPath(root.uri, newItemFolder);
+  const folder = vscode.Uri.joinPath(root.uri, config.newItemFolder);
   await vscode.workspace.fs.createDirectory(folder);
   const id = generateId(store.takenIds());
   // The ID is unique, so the suffix is only a guard against hand-made files.
-  const fileName = await uniqueFileName(baseFileName(id, title), (name) => exists(vscode.Uri.joinPath(folder, name)));
+  const fileName = await uniqueFileName(baseFileName(id, fields.title), (name) => exists(vscode.Uri.joinPath(folder, name)));
   const uri = vscode.Uri.joinPath(folder, fileName);
-
-  const data: Record<string, unknown> = {
-    [p.id]: id,
-    [p.title]: title.trim(),
-    [p.type]: picked.type,
-  };
-  if (picked.type === 'task') {
-    data[p.status] = config.statuses[0].name;
-  }
-  data[p.start] = start.trim();
-  data[p.tags] = [];
-  // Template keys may add fields or replace tags, but not the core fields above.
-  for (const [key, value] of Object.entries(config['template.frontmatter'])) {
-    if (!(key in data) || key === p.tags) {
-      data[key] = value;
-    }
-  }
-
-  const body = renderTemplate(config['template.body'], { title: title.trim(), date: start.trim() });
+  const data = newItemData(id, fields, config.properties, config.statuses, config['template.frontmatter']);
+  const body = renderTemplate(config['template.body'], { title: fields.title, date: fields.start ?? fields.end ?? '' });
   const text = createFrontmatterFile(data, body ? `\n${body}${body.endsWith('\n') ? '' : '\n'}` : '\n');
   await vscode.workspace.fs.writeFile(uri, encoder.encode(text));
-  await vscode.window.showTextDocument(uri);
+  return uri;
 }
 
 /**
- * Creates an undated task straight from the table (no prompts): it shows up in
- * the table and can be given dates or a parent there.
+ * Creates a task straight from the table, kanban or list (no dialog); it can be
+ * given dates or a parent there.
  */
 export async function createQuickTask(
   store: PlannerStore,
@@ -98,33 +47,31 @@ export async function createQuickTask(
   /** `YYYY-MM-DD`; makes it a single-day task due that day. */
   start?: string,
 ): Promise<void> {
-  const root = vscode.workspace.workspaceFolders?.[0];
-  if (!root || !title.trim()) {
+  if (!title.trim()) {
     return;
   }
-  const config = getConfig();
-  const { newItemFolder, properties: p } = config;
-  const folder = vscode.Uri.joinPath(root.uri, newItemFolder);
-  await vscode.workspace.fs.createDirectory(folder);
-  const id = generateId(store.takenIds());
-  const fileName = await uniqueFileName(baseFileName(id, title), (name) => exists(vscode.Uri.joinPath(folder, name)));
-  const data: Record<string, unknown> = {
-    [p.id]: id,
-    [p.title]: title.trim(),
-    [p.type]: 'task',
-    [p.status]: status && config.statuses.some((s) => s.name === status) ? status : config.statuses[0].name,
-    ...(parentId ? { [p.parent]: parentId } : {}),
-    ...(start && normalizeDate(start) ? { [p.start]: normalizeDate(start) } : {}),
-    [p.tags]: [],
-  };
-  for (const [key, value] of Object.entries(config['template.frontmatter'])) {
-    if (!(key in data) || key === p.tags) {
-      data[key] = value;
-    }
+  await createFromFields(store, {
+    title: title.trim(),
+    type: 'task',
+    status,
+    start: start ? normalizeDate(start) : undefined,
+    tags: [],
+    parent: parentId,
+  });
+}
+
+/** Moves the file to the trash after a modal confirmation. */
+export async function deleteItem(store: PlannerStore, key: string): Promise<void> {
+  const item = store.get(key);
+  if (!item) {
+    return;
   }
-  const body = renderTemplate(config['template.body'], { title: title.trim(), date: '' });
-  const text = createFrontmatterFile(data, body ? `\n${body}${body.endsWith('\n') ? '' : '\n'}` : '\n');
-  await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(folder, fileName), encoder.encode(text));
+  const lang = getLang();
+  const action = t(lang, 'msg.deleteAction');
+  const picked = await vscode.window.showWarningMessage(t(lang, 'msg.confirmDelete', item.title), { modal: true }, action);
+  if (picked === action) {
+    await vscode.workspace.fs.delete(vscode.Uri.parse(key), { useTrash: true });
+  }
 }
 
 /** Keeps `<id>-<title>.md` file names in sync after an ID change. */

@@ -17,6 +17,8 @@ export function openPopover(anchor: HTMLElement, build: (close: () => void) => H
   };
   const onKey = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
+      // Only the popover closes (not a dialog underneath).
+      e.stopPropagation();
       close();
       anchor.focus();
     }

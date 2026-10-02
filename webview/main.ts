@@ -3,6 +3,7 @@ import { MessageKey, t } from '../src/i18n';
 import type { PlannerItem } from '../src/model';
 import { CalendarView as CalendarRange, DEFAULT_SETTINGS, GanttViewMode, Lang, PlannerSettings } from '../src/settings';
 import { CalendarNav, CalendarView } from './calendar';
+import { initEditor, newItem, receiveBody, updateEditorContext } from './editor';
 import { formatDate } from './dates';
 import { GanttView } from './gantt';
 import { KanbanView } from './kanban';
@@ -19,6 +20,8 @@ type ExtensionMessage =
   | { type: 'view'; view: View }
   | { type: 'tableState'; state: unknown }
   | { type: 'listState'; state: unknown }
+  | { type: 'body'; key: string; body?: string }
+  | { type: 'newItem' }
   | {
       type: 'config';
       settings: PlannerSettings;
@@ -48,6 +51,7 @@ const settings = new SettingsView($('settings'));
 const table = new TableView($('table'));
 const kanban = new KanbanView($('kanban'));
 const list = new ListView($('list'));
+initEditor($('dialog-root'));
 
 function applyI18n() {
   document.documentElement.lang = state.lang;
@@ -146,6 +150,7 @@ function render() {
       break;
   }
   renderAppBar();
+  updateEditorContext(state.items, state.settings, state.lang);
 }
 
 document.querySelectorAll<HTMLButtonElement>('button[data-view]').forEach((button) =>
@@ -157,13 +162,17 @@ document.querySelectorAll<HTMLButtonElement>('button[data-view]').forEach((butto
 $('nav-today').addEventListener('click', () => (state.view === 'gantt' ? gantt.today() : calendar.today()));
 $('nav-prev').addEventListener('click', () => calendar.prev());
 $('nav-next').addEventListener('click', () => calendar.next());
-$('new-item').addEventListener('click', () => {
-  post({ type: 'create', date: formatDate(new Date()) });
-});
+$('new-item').addEventListener('click', () => newItem({ start: formatDate(new Date()) }));
 
 window.addEventListener('message', (e: MessageEvent<ExtensionMessage>) => {
   const message = e.data;
   switch (message.type) {
+    case 'body':
+      receiveBody(message.key, message.body);
+      return;
+    case 'newItem':
+      newItem({ start: formatDate(new Date()) });
+      return;
     case 'items':
       state.items = message.items;
       break;

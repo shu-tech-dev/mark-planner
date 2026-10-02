@@ -11,6 +11,7 @@ import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { addDays, formatDate } from './dates';
 import { icon } from './icons';
 import { PriorityFlag, Progress } from './kanban';
+import { editItem, openItem } from './editor';
 import { itemTooltip, tooltip } from './tooltip';
 import { post } from './vscode';
 
@@ -172,10 +173,10 @@ function Row({ item, ancestors, settings, lang, items, today, canComplete, onTog
     <li
       class={`tl-row${done ? ' done' : ''}`}
       tabIndex={0}
-      onClick={() => post({ type: 'open', key: item.key })}
+      onClick={(e) => openItem(item.key, e)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' && e.target === e.currentTarget) {
-          post({ type: 'open', key: item.key });
+          editItem(item.key);
         }
       }}
       onMouseEnter={(e) => {

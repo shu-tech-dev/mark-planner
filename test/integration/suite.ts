@@ -1,6 +1,7 @@
 import * as assert from 'node:assert/strict';
 import * as vscode from 'vscode';
-import { createQuickTask } from '../../src/commands';
+import { applyChecks } from '../../src/checklist';
+import { createFromFields, createQuickTask } from '../../src/commands';
 import { getConfig, updateSetting } from '../../src/config';
 import { cellPatch } from '../../src/table';
 import type { TaskTreeProvider } from '../../src/sidebar';
@@ -149,6 +150,32 @@ export async function run(): Promise<void> {
   await writeChecks('- [x] a\n- [x] b\n    - [x] c\n');
   await waitFor(() => store.getItems().find((i) => i.title === 'checks')?.checklist?.done === 3, 'checklist updated');
   console.log('ok: checklist progress indexed and updated');
+
+  // Editor dialog: checkbox toggles change only the body; creation writes every field.
+  const checksItem = store.getItems().find((i) => i.title === 'checks')!;
+  const before = await read('planner/check01-checks.md');
+  await store.patch(checksItem.key, {}, (body) => applyChecks(body, [{ line: 1, checked: false }]));
+  await waitFor(() => store.get(checksItem.key)?.checklist?.done === 2, 'body-only patch indexed');
+  assert.equal(await read('planner/check01-checks.md'), before.replace('- [x] b', '- [ ] b'));
+  await createFromFields(store, {
+    title: 'ダイアログ作成',
+    type: 'task',
+    status: '完了',
+    priority: 2,
+    start: '2026-10-20',
+    end: '2026-10-22T18:00',
+    tags: ['x'],
+    parent: 'check01',
+    repeat: 'monthly',
+  });
+  await waitFor(() => store.getItems().some((i) => i.title === 'ダイアログ作成'), 'dialog item indexed');
+  const created = store.getItems().find((i) => i.title === 'ダイアログ作成')!;
+  assert.deepEqual(
+    [created.status, created.priority, created.start, created.end, created.tags, created.parent, created.repeat],
+    ['完了', 2, '2026-10-20', '2026-10-22T18:00', ['x'], 'check01', 'monthly'],
+  );
+  await vscode.commands.executeCommand('markPlanner.newItem');
+  console.log('ok: editor dialog writes body checks and creates items');
 
   // Completing a repeating task creates the next one, which takes over `repeat`.
   const weeklyUri = vscode.Uri.joinPath(root, 'planner/week01-weekly.md');

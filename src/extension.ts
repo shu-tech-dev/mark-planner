@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { createItem, fixDuplicateIds } from './commands';
+import { fixDuplicateIds } from './commands';
 import { getLang } from './config';
 import { t } from './i18n';
 import { PlannerPanel } from './panel';
@@ -16,7 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('markPlanner.openKanban', () => PlannerPanel.show(context, store, 'kanban')),
     vscode.commands.registerCommand('markPlanner.openList', () => PlannerPanel.show(context, store, 'list')),
     vscode.commands.registerCommand('markPlanner.openSettings', () => PlannerPanel.show(context, store, 'settings')),
-    vscode.commands.registerCommand('markPlanner.newItem', () => createItem(store)),
+    vscode.commands.registerCommand('markPlanner.newItem', () => PlannerPanel.newItem(context, store)),
     vscode.commands.registerCommand('markPlanner.fixDuplicateIds', () => fixDuplicateIds(store)),
   );
 

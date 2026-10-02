@@ -7,6 +7,7 @@ import type { PlannerItem } from '../src/model';
 import { GanttViewMode, Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { translucent } from './colors';
 import { addDays, formatDate, formatDateTime, isDateOnly } from './dates';
+import { editItem } from './editor';
 import { itemTooltip, tooltip } from './tooltip';
 import { post } from './vscode';
 
@@ -185,7 +186,7 @@ export class GanttView {
       arrow_curve: 6,
       popup: false,
       on_double_click: (task: { id: string }) => {
-        post({ type: 'open', key: this.rowOf(task).item.key });
+        editItem(this.rowOf(task).item.key);
       },
       on_date_change: (task: { id: string }, start: Date, end: Date) => {
         const row = this.rowOf(task);

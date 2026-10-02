@@ -11,6 +11,7 @@ import { Lang, PlannerSettings, resolveStatus, StatusDef } from '../src/settings
 import { formatDate } from './dates';
 import { icon } from './icons';
 import { checklistInfo } from './progress';
+import { editItem, openItem } from './editor';
 import { itemTooltip, tooltip } from './tooltip';
 import { post } from './vscode';
 
@@ -214,10 +215,10 @@ function Card({ item, remaining, ancestors, settings, items, lang, dragging, onD
         onDragStart();
       }}
       onDragEnd={onDragEnd}
-      onClick={() => post({ type: 'open', key: item.key })}
+      onClick={(e) => openItem(item.key, e)}
       onKeyDown={(e) => {
         if (e.key === 'Enter') {
-          post({ type: 'open', key: item.key });
+          editItem(item.key);
         }
       }}
       onMouseEnter={(e) => {

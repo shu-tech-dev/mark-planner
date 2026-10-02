@@ -108,7 +108,7 @@ export class PlannerStore implements vscode.Disposable {
    * Completing a repeating task first creates its next occurrence, which takes
    * over the `repeat` key (so unchecking and re-checking does not repeat twice).
    */
-  async patch(key: string, patch: Record<string, unknown>): Promise<void> {
+  async patch(key: string, patch: Record<string, unknown>, transformBody?: (body: string) => string): Promise<void> {
     const item = this.items.get(key);
     const { properties, statuses } = getConfig();
     const uri = vscode.Uri.parse(key);
@@ -126,7 +126,13 @@ export class PlannerStore implements vscode.Disposable {
     ) {
       fullPatch[properties.repeat] = undefined;
     }
-    await writeFrontmatter(uri, fullPatch);
+    await writeFrontmatter(uri, fullPatch, transformBody);
+  }
+
+  /** Reads the body (after the frontmatter) from the open editor or the file. */
+  async body(key: string): Promise<string> {
+    const text = (await vscode.workspace.openTextDocument(vscode.Uri.parse(key))).getText();
+    return text.slice(splitFrontmatter(text).bodyStart);
   }
 
   /**
@@ -230,13 +236,22 @@ export async function fileExists(uri: vscode.Uri): Promise<boolean> {
 }
 
 /**
- * Applies a frontmatter patch through a WorkspaceEdit so that it works on open
- * (even unsaved) editors and can be undone, then saves the file.
+ * Applies a frontmatter patch (and optionally a body change) through a WorkspaceEdit
+ * so that it works on open (even unsaved) editors and can be undone, then saves the file.
  */
-export async function writeFrontmatter(uri: vscode.Uri, patch: Record<string, unknown>): Promise<void> {
+export async function writeFrontmatter(
+  uri: vscode.Uri,
+  patch: Record<string, unknown>,
+  transformBody?: (body: string) => string,
+): Promise<void> {
   const doc = await vscode.workspace.openTextDocument(uri);
   const oldText = doc.getText();
-  const newText = updateFrontmatter(oldText, patch);
+  // An empty patch (body-only change) leaves the YAML exactly as written.
+  let newText = Object.keys(patch).length ? updateFrontmatter(oldText, patch) : oldText;
+  if (transformBody) {
+    const { bodyStart } = splitFrontmatter(newText);
+    newText = newText.slice(0, bodyStart) + transformBody(newText.slice(bodyStart));
+  }
   if (newText === oldText) {
     return;
   }
