@@ -44,7 +44,11 @@ export async function run(): Promise<void> {
 
   await vscode.commands.executeCommand('markPlanner.fixDuplicateIds');
   await waitFor(
-    () => store.duplicateIds().size === 0 && store.getItems().every((i) => i.path.startsWith(`planner/${i.id}-`)),
+    // Both files must be indexed: the rename briefly shows only the original.
+    () =>
+      store.getItems().length === 2 &&
+      store.duplicateIds().size === 0 &&
+      store.getItems().every((i) => i.path.startsWith(`planner/${i.id}-`)),
     'duplicates fixed and renamed',
   );
   assert.equal(store.get(review.key)?.id, 'aaa111');
