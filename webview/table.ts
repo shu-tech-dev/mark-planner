@@ -1,5 +1,6 @@
 import { MessageKey, t } from '../src/i18n';
 import type { ItemType, PlannerItem } from '../src/model';
+import { Priority, PRIORITIES, PRIORITY_COLORS, priorityLabel } from '../src/priority';
 import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import {
   allTags,
@@ -36,6 +37,7 @@ const DEFAULT_COLUMNS: ColumnState[] = [
   { id: 'title', visible: true, width: 320 },
   { id: 'type', visible: true, width: 96 },
   { id: 'status', visible: true, width: 128 },
+  { id: 'priority', visible: true, width: 96 },
   { id: 'start', visible: true, width: 150 },
   { id: 'end', visible: true, width: 150 },
   { id: 'remaining', visible: true, width: 140 },
@@ -499,6 +501,30 @@ export class TableView {
           ),
         );
         break;
+      case 'priority':
+        if (item.type !== 'task') {
+          td.classList.remove('editable');
+          td.append(el('span', 'muted', '—'));
+          break;
+        }
+        td.append(item.priority ? this.priorityFlag(item.priority) : el('span', 'muted', '—'));
+        td.addEventListener('click', () =>
+          openPopover(td, (close) =>
+            menuList(
+              [
+                ...PRIORITIES.map((p) => ({
+                  label: priorityLabel(p, this.lang),
+                  color: PRIORITY_COLORS[p],
+                  checked: item.priority === p,
+                  onSelect: () => this.patch(item, 'priority', p),
+                })),
+                { label: this.tr('priority.none'), checked: !item.priority, onSelect: () => this.patch(item, 'priority', '') },
+              ],
+              close,
+            ),
+          ),
+        );
+        break;
       case 'start':
       case 'end': {
         const value = item[column];
@@ -559,6 +585,13 @@ export class TableView {
     const pill = el('span', 'status-pill', el('span', 'dot'), status.label ?? status.name);
     pill.style.setProperty('--c', status.color);
     return pill;
+  }
+
+  private priorityFlag(priority: Priority): HTMLElement {
+    const flag = el('span', 'priority-flag', iconEl('flag'), `P${priority}`);
+    flag.style.setProperty('--c', PRIORITY_COLORS[priority]);
+    flag.title = priorityLabel(priority, this.lang);
+    return flag;
   }
 
   private formatDate(value: string): string {

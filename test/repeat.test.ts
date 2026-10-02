@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { toPlannerItem } from '../src/model';
+import { DEFAULT_PROPERTY_MAP, toPlannerItem } from '../src/model';
 import { nextOccurrence, parseRepeat, repeatLabel, uncheckChecklist } from '../src/repeat';
 
 test('parses English, Japanese and "every N" forms', () => {
@@ -69,6 +69,6 @@ test('unchecks the checklist outside code blocks', () => {
 test('reads the repeat key (and its mapped name)', () => {
   assert.equal(toPlannerItem({ end: '2026-10-05', repeat: 'weekly' }, 'k', 'a.md')?.repeat, 'weekly');
   assert.equal(toPlannerItem({ end: '2026-10-05' }, 'k', 'a.md')?.repeat, undefined);
-  const props = { id: 'id', title: 'title', type: 'type', status: 'status', start: 'start', end: 'end', tags: 'tags', parent: 'parent', depends: 'depends', repeat: 'every' };
+  const props = { ...DEFAULT_PROPERTY_MAP, repeat: 'every' };
   assert.equal(toPlannerItem({ end: '2026-10-05', every: '毎週' }, 'k', 'a.md', props)?.repeat, '毎週');
 });

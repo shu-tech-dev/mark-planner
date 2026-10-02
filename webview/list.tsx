@@ -5,11 +5,12 @@ import { ancestorTitles, parentMap } from '../src/hierarchy';
 import { MessageKey, t } from '../src/i18n';
 import { buildList, dueLabel, ListSectionId, toggleStatus } from '../src/list';
 import type { PlannerItem } from '../src/model';
+import { PRIORITY_COLORS } from '../src/priority';
 import { parseRepeat, repeatLabel } from '../src/repeat';
 import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { addDays, formatDate } from './dates';
 import { icon } from './icons';
-import { Progress } from './kanban';
+import { PriorityFlag, Progress } from './kanban';
 import { itemTooltip, tooltip } from './tooltip';
 import { post } from './vscode';
 
@@ -188,7 +189,7 @@ function Row({ item, ancestors, settings, lang, items, today, canComplete, onTog
     >
       <button
         class="tl-check"
-        style={{ '--c': status.color }}
+        style={{ '--c': item.priority && !done ? PRIORITY_COLORS[item.priority] : status.color }}
         disabled={!canComplete}
         aria-pressed={done}
         title={t(lang, done ? 'list.uncheck' : 'list.check')}
@@ -205,6 +206,7 @@ function Row({ item, ancestors, settings, lang, items, today, canComplete, onTog
       </div>
       <div class="tl-side">
         <Progress item={item} />
+        {!done && <PriorityFlag item={item} lang={lang} />}
         {item.tags.map((tag) => (
           <span class="tag" key={tag}>
             {tag}

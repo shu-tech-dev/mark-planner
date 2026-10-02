@@ -1,5 +1,6 @@
 import { remainingSortKey, type Remaining } from './businessDays';
 import type { PlannerItem } from './model';
+import { priorityRank } from './priority';
 import { resolveStatus, type StatusDef } from './settings';
 
 export interface KanbanColumn {
@@ -11,7 +12,7 @@ export interface KanbanColumn {
  * One column per configured status (in settings order), holding the tasks in that
  * status. Unknown statuses fall into the first column, like everywhere else.
  * Cards are ordered by deadline urgency (overdue → due today → fewest workdays
- * left), then by start date, with undated tasks last.
+ * left), then by priority, then by start date, with undated tasks last.
  */
 export function buildBoard(
   items: PlannerItem[],
@@ -30,6 +31,11 @@ export function buildBoard(
     const kb = key(b);
     if (ka !== kb) {
       return ka === undefined ? 1 : kb === undefined ? -1 : ka - kb;
+    }
+    const pa = priorityRank(a.priority);
+    const pb = priorityRank(b.priority);
+    if (pa !== pb) {
+      return pa - pb;
     }
     const da = a.start ?? a.end;
     const db = b.start ?? b.end;

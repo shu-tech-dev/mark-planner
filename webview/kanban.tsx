@@ -6,6 +6,7 @@ import { ancestorTitles, parentMap } from '../src/hierarchy';
 import { MessageKey, t } from '../src/i18n';
 import { buildBoard } from '../src/kanban';
 import type { PlannerItem } from '../src/model';
+import { PRIORITY_COLORS, priorityLabel } from '../src/priority';
 import { Lang, PlannerSettings, resolveStatus, StatusDef } from '../src/settings';
 import { formatDate } from './dates';
 import { icon } from './icons';
@@ -231,7 +232,10 @@ function Card({ item, remaining, ancestors, settings, items, lang, dragging, onD
       {ancestors.length > 0 && <div class="kb-crumbs">{[...ancestors].reverse().join(' › ')}</div>}
       <div class="kb-title">{item.title}</div>
       <div class="kb-meta">
-        <span class="kb-date">{range ?? t(lang, 'kanban.undated')}</span>
+        <span class="kb-date">
+          {range ?? t(lang, 'kanban.undated')}
+          {!done && <PriorityFlag item={item} lang={lang} />}
+        </span>
         {remaining && <span class={`remaining ${remaining.kind}`}>{remainingLabel(remaining, lang)}</span>}
       </div>
       <Progress item={item} />
@@ -260,6 +264,18 @@ export function Progress({ item }: { item: PlannerItem }) {
         <span style={{ width: `${info.percent}%` }} />
       </span>
       <span class="mp-progress-text">{info.text}</span>
+    </span>
+  );
+}
+
+/** `P1` flag in the priority's color, shared with the list view. */
+export function PriorityFlag({ item, lang }: { item: PlannerItem; lang: Lang }) {
+  if (!item.priority) {
+    return null;
+  }
+  return (
+    <span class="priority-flag" style={{ '--c': PRIORITY_COLORS[item.priority] }} title={priorityLabel(item.priority, lang)}>
+      <Icon name="flag" />P{item.priority}
     </span>
   );
 }

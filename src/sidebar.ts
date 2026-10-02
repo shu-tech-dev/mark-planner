@@ -5,6 +5,7 @@ import { ancestorTitles, parentMap } from './hierarchy';
 import { MessageKey, t } from './i18n';
 import { buildList, dueLabel, DueKind, ListSectionId, toggleStatus } from './list';
 import type { PlannerItem } from './model';
+import { priorityLabel } from './priority';
 import { parseRepeat, repeatLabel } from './repeat';
 import { PlannerStore } from './store';
 
@@ -104,7 +105,8 @@ export class TaskTreeProvider implements vscode.TreeDataProvider<Node>, vscode.D
     const checklist = task.checklist ? `☑ ${task.checklist.done}/${task.checklist.total}` : undefined;
     const repeat = parseRepeat(task.repeat);
     const dueText = due && repeat ? `${due.text} ↻` : due?.text;
-    item.description = [dueText, checklist, ancestors[0]].filter(Boolean).join(' · ');
+    const priority = task.priority ? `P${task.priority}` : undefined;
+    item.description = [priority, dueText, checklist, ancestors[0]].filter(Boolean).join(' · ');
     item.iconPath = new vscode.ThemeIcon(
       'circle-large-outline',
       due && DUE_COLOR[due.kind] ? new vscode.ThemeColor(DUE_COLOR[due.kind]!) : undefined,
@@ -120,6 +122,9 @@ export class TaskTreeProvider implements vscode.TreeDataProvider<Node>, vscode.D
     tooltip.appendMarkdown(`**${task.title.replace(/[\\`*_[\]<>]/g, '\\$&')}**\n\n`);
     if (due) {
       tooltip.appendText(`${due.text}${remaining ? ` — ${remainingLabel(remaining, lang)}` : ''}\n\n`);
+    }
+    if (task.priority) {
+      tooltip.appendText(`${t(lang, 'table.col.priority')}: ${priorityLabel(task.priority, lang)}\n\n`);
     }
     if (repeat) {
       tooltip.appendText(`${t(lang, 'tooltip.repeat')}: ${repeatLabel(repeat, lang)}\n\n`);

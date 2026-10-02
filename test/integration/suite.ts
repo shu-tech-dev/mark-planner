@@ -98,8 +98,10 @@ export async function run(): Promise<void> {
 
   await store.patch(backlog.key, cellPatch('tags', 'a, b', getConfig().properties)!);
   await store.patch(backlog.key, cellPatch('start', '2026-11-02', getConfig().properties)!);
-  await waitFor(() => store.get(backlog.key)?.start === '2026-11-02', 'cell edits indexed');
+  await store.patch(backlog.key, cellPatch('priority', 1, getConfig().properties)!);
+  await waitFor(() => store.get(backlog.key)?.start === '2026-11-02' && store.get(backlog.key)?.priority === 1, 'cell edits indexed');
   assert.deepEqual(store.get(backlog.key)?.tags, ['a', 'b']);
+  assert.match(await read(backlog.path), /^priority: 1$/m);
   console.log('ok: cell edits written to frontmatter');
 
   await vscode.commands.executeCommand('markPlanner.openTable');

@@ -1,3 +1,5 @@
+import { parsePriority, type Priority } from './priority';
+
 /** `holiday` marks the user's own days off (vacation). */
 export type ItemType = 'task' | 'event' | 'holiday';
 
@@ -15,6 +17,7 @@ export interface PlannerItem {
   tags: string[];
   parent?: string;
   depends: string[];
+  priority?: Priority;
   /** Raw `repeat` value (e.g. `weekly`); see parseRepeat. */
   repeat?: string;
   /** Workspace-relative path, for display. */
@@ -34,6 +37,7 @@ export interface PropertyMap {
   parent: string;
   depends: string;
   repeat: string;
+  priority: string;
 }
 
 export const DEFAULT_PROPERTY_MAP: PropertyMap = {
@@ -47,6 +51,7 @@ export const DEFAULT_PROPERTY_MAP: PropertyMap = {
   parent: 'parent',
   depends: 'depends',
   repeat: 'repeat',
+  priority: 'priority',
 };
 
 const DATE_RE = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2})(?::\d{2})?)?$/;
@@ -120,6 +125,7 @@ export function toPlannerItem(
     tags: asStringList(data[props.tags]),
     parent: asString(data[props.parent]),
     depends: asStringList(data[props.depends]),
+    ...(parsePriority(data[props.priority]) ? { priority: parsePriority(data[props.priority]) } : {}),
     ...(asString(data[props.repeat]) ? { repeat: asString(data[props.repeat]) } : {}),
     path,
   };

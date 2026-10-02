@@ -2,6 +2,7 @@ import { deadlineOf } from './businessDays';
 import { formatDisplayDate } from './dateFormat';
 import { t } from './i18n';
 import type { PlannerItem } from './model';
+import { priorityRank } from './priority';
 import { resolveStatus, type Lang, type StatusDef } from './settings';
 
 export const LIST_SECTIONS = ['overdue', 'today', 'tomorrow', 'thisWeek', 'later', 'noDate', 'completed'] as const;
@@ -70,6 +71,7 @@ export function buildList(
   }
   const byDeadline = (a: PlannerItem, b: PlannerItem) =>
     (deadlineOf(a) ?? '').localeCompare(deadlineOf(b) ?? '') ||
+    priorityRank(a.priority) - priorityRank(b.priority) ||
     (a.end ?? a.start ?? '').localeCompare(b.end ?? b.start ?? '') ||
     a.title.localeCompare(b.title);
   for (const [id, list] of sections) {

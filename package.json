@@ -131,6 +131,9 @@
             },
             "repeat": {
               "type": "string"
+            },
+            "priority": {
+              "type": "string"
             }
           },
           "order": 5

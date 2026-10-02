@@ -1,9 +1,10 @@
 import { itemProgress } from './checklist';
 import { parentMap } from './hierarchy';
 import { ItemType, normalizeDate, PlannerItem, PropertyMap } from './model';
+import { parsePriority } from './priority';
 import { resolveStatus, StatusDef } from './settings';
 
-export const COLUMN_IDS = ['title', 'type', 'status', 'start', 'end', 'remaining', 'progress', 'tags', 'parent', 'depends', 'path'] as const;
+export const COLUMN_IDS = ['title', 'type', 'status', 'priority', 'start', 'end', 'remaining', 'progress', 'tags', 'parent', 'depends', 'path'] as const;
 export type ColumnId = (typeof COLUMN_IDS)[number];
 export type SortDir = 'asc' | 'desc';
 export type GroupBy = 'none' | 'status' | 'type';
@@ -90,6 +91,8 @@ export function comparator(
         return TYPE_ORDER.indexOf(i.type);
       case 'status':
         return i.type === 'task' ? resolveStatus(i.status, statuses).index : undefined;
+      case 'priority':
+        return i.priority;
       case 'start':
         return i.start;
       case 'end':
@@ -225,7 +228,7 @@ export function parentCandidates(item: PlannerItem, items: PlannerItem[]): Plann
 }
 
 /** Columns editable from the table, and how each value is written to frontmatter. */
-export const EDITABLE_FIELDS = ['title', 'type', 'status', 'start', 'end', 'tags', 'parent'] as const;
+export const EDITABLE_FIELDS = ['title', 'type', 'status', 'priority', 'start', 'end', 'tags', 'parent'] as const;
 export type EditableField = (typeof EDITABLE_FIELDS)[number];
 
 /**
@@ -248,6 +251,13 @@ export function cellPatch(
       return value === 'task' || value === 'event' || value === 'holiday' ? { [key]: value } : undefined;
     case 'status':
       return typeof value === 'string' && value.trim() ? { [key]: value.trim() } : undefined;
+    case 'priority': {
+      if (value === '' || value === null || value === undefined) {
+        return { [key]: undefined };
+      }
+      const priority = parsePriority(value);
+      return priority ? { [key]: priority } : undefined;
+    }
     case 'start':
     case 'end': {
       if (value === '' || value === null || value === undefined) {

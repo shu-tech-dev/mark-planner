@@ -3,6 +3,7 @@ import { formatDisplayDate } from '../src/dateFormat';
 import { ancestorTitles, parentMap } from '../src/hierarchy';
 import { MessageKey, t } from '../src/i18n';
 import type { PlannerItem } from '../src/model';
+import { PRIORITY_COLORS, priorityLabel } from '../src/priority';
 import { parseRepeat, repeatLabel } from '../src/repeat';
 import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { formatDate } from './dates';
@@ -51,6 +52,11 @@ export function itemTooltip(item: PlannerItem, ctx: TooltipContext, options: Too
     const pill = el('span', 'tt-chip tt-status', el('span', 'tt-dot'), status.label ?? status.name);
     pill.style.setProperty('--c', status.color);
     chips.append(pill);
+    if (item.priority) {
+      const flag = el('span', 'tt-chip tt-status', el('span', 'tt-dot'), priorityLabel(item.priority, lang));
+      flag.style.setProperty('--c', PRIORITY_COLORS[item.priority]);
+      chips.append(flag);
+    }
   }
   card.append(chips);
 

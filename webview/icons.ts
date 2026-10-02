@@ -17,6 +17,7 @@ const paths: Record<string, string> = {
   'arrow-up': '<path d="M12 19V5M6 11l6-6 6 6"/>',
   'arrow-down': '<path d="M12 5v14M6 13l6 6 6-6"/>',
   open: '<path d="M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  flag: '<path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.33 2q2 0 3.67-.8a1 1 0 0 1 1.4.9v9.5a1 1 0 0 1-.6.9A8.6 8.6 0 0 1 15.33 15C13 15 11 13 8 13a6 6 0 0 0-4 1.5"/>',
   repeat: '<path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/>',
   x: '<path d="M18 6 6 18M6 6l12 12"/>',
   settings:
