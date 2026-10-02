@@ -5,6 +5,17 @@ export type LanguageSetting = 'auto' | Lang;
 export type CalendarView = 'month' | 'week' | 'day';
 export type GanttViewMode = 'Day' | 'Week' | 'Month';
 export type Theme = 'auto' | 'light' | 'dark';
+/** Views shown as tabs in the app bar (settings is a separate button). */
+export const TAB_VIEWS = ['calendar', 'gantt', 'table', 'kanban', 'list'] as const;
+export type TabView = (typeof TAB_VIEWS)[number];
+
+/** Known, unique tabs in the given order; missing ones are appended so none disappears. */
+export function normalizeTabOrder(value: unknown): TabView[] {
+  const known = Array.isArray(value)
+    ? value.filter((v, i): v is TabView => (TAB_VIEWS as readonly unknown[]).includes(v) && value.indexOf(v) === i)
+    : [];
+  return [...known, ...TAB_VIEWS.filter((v) => !known.includes(v))];
+}
 
 export interface StatusDef {
   name: string;
@@ -32,6 +43,7 @@ export interface PlannerSettings {
   theme: Theme;
   /** Display format for dates (see dateFormat.ts); `auto` omits the current year. */
   dateFormat: string;
+  tabOrder: TabView[];
   /** Days of week treated as days off, mapped to their color (`"0"` = Sunday … `"6"` = Saturday). */
   weekendColors: Record<string, string>;
   /** Show Japanese public holidays. */
@@ -65,6 +77,7 @@ export const DEFAULT_SETTINGS: PlannerSettings = {
   maxEventsPerDay: 0,
   theme: 'auto',
   dateFormat: 'auto',
+  tabOrder: [...TAB_VIEWS],
   weekendColors: { '0': '#f14c4c', '6': '#3794ff' },
   showHolidays: true,
   holidayColor: '#f14c4c',
@@ -140,6 +153,7 @@ export function normalizeSettings(raw: Partial<Record<SettingKey, unknown>>): Pl
       typeof raw.dateFormat === 'string' && raw.dateFormat.trim() && raw.dateFormat.length <= 64
         ? raw.dateFormat.trim()
         : d.dateFormat,
+    tabOrder: normalizeTabOrder(raw.tabOrder),
     weekendColors: isRecord(raw.weekendColors)
       ? Object.fromEntries(
           Object.entries(raw.weekendColors)

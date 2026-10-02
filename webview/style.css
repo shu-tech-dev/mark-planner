@@ -736,6 +736,37 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev:hover {
 .settings .weekdays input[type='color']:disabled {
   opacity: 0.25;
 }
+.settings .tab-order {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 320px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: tab;
+}
+.settings .tab-order li {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 32px;
+  padding: 0 4px 0 10px;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius-sm);
+  background: var(--mp-bg);
+  counter-increment: tab;
+}
+.settings .tab-order li::before {
+  content: counter(tab);
+  width: 18px;
+  color: var(--mp-text-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.settings .tab-order .tab-name {
+  flex: 1;
+}
 .settings .date-select {
   display: flex;
   flex-wrap: wrap;

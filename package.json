@@ -204,6 +204,29 @@
           ],
           "order": 8
         },
+        "markPlanner.tabOrder": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "calendar",
+              "gantt",
+              "table",
+              "kanban",
+              "list"
+            ]
+          },
+          "uniqueItems": true,
+          "default": [
+            "calendar",
+            "gantt",
+            "table",
+            "kanban",
+            "list"
+          ],
+          "markdownDescription": "%config.tabOrder%",
+          "order": 9
+        },
         "markPlanner.dateFormat": {
           "type": "string",
           "default": "auto",
@@ -217,7 +240,7 @@
             "MMM D, YYYY"
           ],
           "markdownDescription": "%config.dateFormat%",
-          "order": 9
+          "order": 10
         },
         "markPlanner.calendarView": {
           "type": "string",
@@ -228,7 +251,7 @@
           ],
           "default": "month",
           "description": "%config.calendarView%",
-          "order": 10
+          "order": 11
         },
         "markPlanner.weekStart": {
           "type": "integer",
@@ -252,7 +275,7 @@
             "%weekday.5%",
             "%weekday.6%"
           ],
-          "order": 11
+          "order": 12
         },
         "markPlanner.ganttViewMode": {
           "type": "string",
@@ -263,20 +286,20 @@
           ],
           "default": "Day",
           "description": "%config.ganttViewMode%",
-          "order": 12
+          "order": 13
         },
         "markPlanner.hideDone": {
           "type": "boolean",
           "default": false,
           "description": "%config.hideDone%",
-          "order": 13
+          "order": 14
         },
         "markPlanner.maxEventsPerDay": {
           "type": "integer",
           "minimum": 0,
           "default": 0,
           "description": "%config.maxEventsPerDay%",
-          "order": 14
+          "order": 15
         },
         "markPlanner.weekendColors": {
           "type": "object",
@@ -330,27 +353,27 @@
             }
           },
           "markdownDescription": "%config.weekendColors%",
-          "order": 15
+          "order": 16
         },
         "markPlanner.showHolidays": {
           "type": "boolean",
           "default": true,
           "description": "%config.showHolidays%",
-          "order": 16
+          "order": 17
         },
         "markPlanner.holidayColor": {
           "type": "string",
           "format": "color",
           "default": "#f14c4c",
           "description": "%config.holidayColor%",
-          "order": 17
+          "order": 18
         },
         "markPlanner.vacationColor": {
           "type": "string",
           "format": "color",
           "default": "#2ea043",
           "description": "%config.vacationColor%",
-          "order": 18
+          "order": 19
         },
         "markPlanner.language": {
           "type": "string",
@@ -366,7 +389,7 @@
             "日本語",
             "English"
           ],
-          "order": 19
+          "order": 20
         }
       }
     }

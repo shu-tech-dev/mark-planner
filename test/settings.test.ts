@@ -102,3 +102,10 @@ test('package.nls files define the same keys', () => {
   const ja = JSON.parse(readFileSync('package.nls.ja.json', 'utf8'));
   assert.deepEqual(Object.keys(en).sort(), Object.keys(ja).sort());
 });
+
+test('tabOrder keeps known unique tabs and appends missing ones', () => {
+  assert.deepEqual(normalizeSettings({}).tabOrder, ['calendar', 'gantt', 'table', 'kanban', 'list']);
+  assert.deepEqual(normalizeSettings({ tabOrder: ['list', 'kanban'] }).tabOrder, ['list', 'kanban', 'calendar', 'gantt', 'table']);
+  assert.deepEqual(normalizeSettings({ tabOrder: ['table', 'bogus', 'table', 'gantt'] }).tabOrder, ['table', 'gantt', 'calendar', 'kanban', 'list']);
+  assert.deepEqual(normalizeSettings({ tabOrder: 'list' }).tabOrder, ['calendar', 'gantt', 'table', 'kanban', 'list']);
+});

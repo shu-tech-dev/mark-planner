@@ -85,7 +85,22 @@ function rangeOptions(): { value: string; label: string; active: boolean; select
   return [];
 }
 
+/** Orders the view tabs per the `tabOrder` setting (moves the existing buttons). */
+function orderTabs() {
+  const group = document.querySelector('.appbar .segmented[role=tablist]');
+  if (!group) {
+    return;
+  }
+  for (const view of state.settings.tabOrder) {
+    const button = group.querySelector(`button[data-view="${view}"]`);
+    if (button) {
+      group.append(button);
+    }
+  }
+}
+
 function renderAppBar() {
+  orderTabs();
   // Not `data-view`: that attribute marks the view buttons.
   document.body.dataset.activeView = state.view;
   document

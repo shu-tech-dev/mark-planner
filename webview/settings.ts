@@ -1,7 +1,7 @@
 import { MessageKey, t } from '../src/i18n';
 import { DEFAULT_PROPERTY_MAP, PropertyMap } from '../src/model';
 import { AUTO_DATE_FORMAT, DATE_FORMAT_PRESETS, formatDisplayDate } from '../src/dateFormat';
-import { Lang, PlannerSettings, SettingKey, StatusDef } from '../src/settings';
+import { Lang, PlannerSettings, SettingKey, StatusDef, TabView } from '../src/settings';
 import { post } from './vscode';
 
 type Attrs = Record<string, string | number | boolean | undefined>;
@@ -95,6 +95,7 @@ export class SettingsView {
             ['light', this.tr('settings.theme.light')],
             ['dark', this.tr('settings.theme.dark')],
           ]),
+          this.tabOrderField(),
           this.dateFormatField(),
           this.selectField('calendarView', 'settings.calendarView', [
             ['month', this.tr('settings.calendarView.month')],
@@ -235,6 +236,43 @@ export class SettingsView {
     });
     this.bind(key, input, (s) => (input.value = String(s[key])));
     return this.row(key, label, input);
+  }
+
+  /** App bar tabs as a reorderable list. */
+  private tabOrderField() {
+    const key: SettingKey = 'tabOrder';
+    const list = h('ol', { class: 'tab-order' });
+    let current: TabView[] = [];
+    const render = (order: TabView[]) => {
+      current = order;
+      list.replaceChildren(
+        ...order.map((view, i) => {
+          const move = (to: number, text: string, label: MessageKey) => {
+            const b = h('button', { class: 'icon', title: this.tr(label), 'aria-label': this.tr(label), disabled: to < 0 || to >= order.length }, text);
+            b.addEventListener('click', () => {
+              const next = [...current];
+              [next[i], next[to]] = [next[to], next[i]];
+              render(next);
+              save(key, next);
+            });
+            return b;
+          };
+          return h(
+            'li',
+            {},
+            h('span', { class: 'tab-name' }, this.tr(`tab.${view}` as MessageKey)),
+            move(i - 1, '↑', 'settings.status.up'),
+            move(i + 1, '↓', 'settings.status.down'),
+          );
+        }),
+      );
+    };
+    this.bind(key, list, (s) => {
+      if (!same(s.tabOrder, current)) {
+        render(s.tabOrder);
+      }
+    });
+    return this.row(key, 'settings.tabOrder', list);
   }
 
   /** Preset select plus a free-form pattern with a live preview. */

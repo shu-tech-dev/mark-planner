@@ -44,5 +44,6 @@
   "command.openTable": "テーブルを開く",
   "config.dateFormat": "Mark Planner の画面での日付の表示形式（ファイルには `YYYY-MM-DD` で保存）。`auto` は今年の年を省略。記号: `YYYY` `YY` `M` `MM` `MMM` `MMMM` `D` `DD` `ddd` `dddd`。文字をそのまま出すときは `[...]` で囲む。時刻は ` HH:mm` で後ろに付く。",
   "command.openKanban": "カンバンを開く",
-  "command.openList": "リストを開く"
+  "command.openList": "リストを開く",
+  "config.tabOrder": "上部バーのタブの順番（`calendar` `gantt` `table` `kanban` `list`）。書き漏れたタブは末尾に追加されます。"
 }
