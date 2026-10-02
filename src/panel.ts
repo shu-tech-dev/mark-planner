@@ -7,7 +7,7 @@ import { DEFAULT_SETTINGS } from './settings';
 import { PlannerStore } from './store';
 import { cellPatch } from './table';
 
-export type PlannerView = 'calendar' | 'gantt' | 'table' | 'settings';
+export type PlannerView = 'calendar' | 'gantt' | 'table' | 'kanban' | 'settings';
 
 const TABLE_STATE_KEY = 'markPlanner.tableState';
 
@@ -18,7 +18,7 @@ type WebviewMessage =
   | { type: 'create'; date: string }
   | { type: 'updateSetting'; key: string; value: unknown }
   | { type: 'patch'; key: string; field: string; value: unknown }
-  | { type: 'createQuick'; title: string; parent?: string }
+  | { type: 'createQuick'; title: string; parent?: string; status?: string }
   | { type: 'saveTableState'; state: unknown };
 
 export class PlannerPanel {
@@ -127,7 +127,7 @@ export class PlannerPanel {
         break;
       }
       case 'createQuick':
-        await createQuickTask(this.store, message.title, message.parent);
+        await createQuickTask(this.store, message.title, message.parent, message.status);
         break;
       case 'saveTableState':
         await this.context.workspaceState.update(TABLE_STATE_KEY, message.state);
@@ -167,6 +167,7 @@ export class PlannerPanel {
       <button data-view="calendar" role="tab"><span data-icon="calendar"></span><span data-i18n="tab.calendar"></span></button>
       <button data-view="gantt" role="tab"><span data-icon="gantt"></span><span data-i18n="tab.gantt"></span></button>
       <button data-view="table" role="tab"><span data-icon="table"></span><span data-i18n="tab.table"></span></button>
+      <button data-view="kanban" role="tab"><span data-icon="kanban"></span><span data-i18n="tab.kanban"></span></button>
     </div>
   </div>
   <div class="appbar-group nav">
@@ -187,6 +188,7 @@ export class PlannerPanel {
   <div id="calendar" class="view"></div>
   <div id="gantt" class="view"><div id="gantt-chart"></div><p id="gantt-empty" class="empty" data-i18n="gantt.empty"></p></div>
   <div id="table" class="view"></div>
+  <div id="kanban" class="view"></div>
   <div id="settings" class="view"></div>
 </main>
 <script nonce="${nonce}" src="${media('webview.js')}"></script>

@@ -227,6 +227,8 @@ body[data-active-view='settings'] .nav .btn,
 body[data-active-view='settings'] .nav .btn-pair,
 body[data-active-view='table'] .nav .btn,
 body[data-active-view='table'] .nav .btn-pair,
+body[data-active-view='kanban'] .nav .btn,
+body[data-active-view='kanban'] .nav .btn-pair,
 body[data-active-view='gantt'] .nav .btn-pair {
   display: none;
 }
@@ -1420,4 +1422,156 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev:hover {
 }
 .tt-hint {
   flex: none;
+}
+
+/* ==== Kanban =========================================================== */
+
+#kanban {
+  overflow: auto;
+}
+.kanban {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  height: 100%;
+  box-sizing: border-box;
+}
+.kb-col {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 280px;
+  /* Columns fit the panel; their card list scrolls. */
+  max-height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  border-radius: var(--mp-radius-lg);
+  background: var(--mp-surface);
+  border: 1px solid var(--mp-border-subtle);
+  transition: background 0.12s, border-color 0.12s;
+}
+.kb-col.over {
+  border-color: var(--c);
+  background: color-mix(in srgb, var(--c) 8%, var(--mp-surface));
+}
+.kb-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px 8px;
+  font-weight: 600;
+}
+.kb-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--c);
+}
+.kb-count {
+  margin-left: 2px;
+  color: var(--mp-text-faint);
+  font-size: 12px;
+  font-weight: 500;
+}
+.kb-cards {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 48px;
+  padding: 4px 10px;
+  overflow-y: auto;
+}
+.kb-empty {
+  padding: 14px 0;
+  text-align: center;
+  color: var(--mp-text-faint);
+  font-size: 12px;
+  border: 1px dashed var(--mp-border);
+  border-radius: var(--mp-radius);
+}
+.kb-card {
+  padding: 10px 12px;
+  border: 1px solid var(--mp-border);
+  border-radius: var(--mp-radius);
+  background: var(--mp-bg);
+  cursor: grab;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s;
+}
+.kb-card:hover {
+  border-color: var(--mp-text-faint);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+.kb-card:active {
+  cursor: grabbing;
+}
+.kb-card.dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+}
+.kb-card.done .kb-title {
+  color: var(--mp-text-muted);
+  text-decoration: line-through;
+}
+.kb-crumbs {
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--mp-text-faint);
+}
+.kb-title {
+  font-weight: 500;
+  word-break: break-word;
+}
+.kb-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 10px;
+  margin-top: 8px;
+  font-size: 12px;
+}
+.kb-date {
+  color: var(--mp-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.kb-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.kb-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 10px 10px;
+  height: 32px;
+  padding: 0 8px;
+  border: none;
+  border-radius: var(--mp-radius-sm);
+  background: transparent;
+  color: var(--mp-text-muted);
+  cursor: pointer;
+}
+.kb-add:hover {
+  background: var(--mp-hover);
+  color: var(--mp-text);
+}
+.kb-add .icon-svg {
+  width: 14px;
+  height: 14px;
+}
+.kb-new {
+  margin: 6px 10px 10px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--mp-accent);
+  border-radius: var(--mp-radius-sm);
+  outline: none;
+  background: var(--mp-input);
+  box-shadow: 0 0 0 3px var(--mp-accent-soft);
 }

@@ -5,12 +5,13 @@ import { CalendarView as CalendarRange, DEFAULT_SETTINGS, GanttViewMode, Lang, P
 import { CalendarNav, CalendarView } from './calendar';
 import { formatDate } from './dates';
 import { GanttView } from './gantt';
+import { KanbanView } from './kanban';
 import { renderIcons } from './icons';
 import { SettingsView } from './settings';
 import { TableView } from './table';
 import { post } from './vscode';
 
-type View = 'calendar' | 'gantt' | 'table' | 'settings';
+type View = 'calendar' | 'gantt' | 'table' | 'kanban' | 'settings';
 
 type ExtensionMessage =
   | { type: 'items'; items: PlannerItem[] }
@@ -43,6 +44,7 @@ const calendar = new CalendarView($('calendar'), (nav) => {
 const gantt = new GanttView($('gantt-chart'), $('gantt-empty'));
 const settings = new SettingsView($('settings'));
 const table = new TableView($('table'));
+const kanban = new KanbanView($('kanban'));
 
 function applyI18n() {
   document.documentElement.lang = state.lang;
@@ -114,6 +116,9 @@ function render() {
       break;
     case 'table':
       table.update(state.items, state.settings, state.lang);
+      break;
+    case 'kanban':
+      kanban.update(state.items, state.settings, state.lang);
       break;
     case 'settings':
       settings.update(state.settings, state.defaults, state.lang, state.target);

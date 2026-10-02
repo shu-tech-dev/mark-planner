@@ -100,6 +100,13 @@ export async function run(): Promise<void> {
   await vscode.commands.executeCommand('markPlanner.openTable');
   console.log('ok: table panel opens');
 
+  // Kanban: a card added in a column gets that column's status.
+  await createQuickTask(store, 'ボード項目', undefined, '完了');
+  await waitFor(() => store.getItems().some((i) => i.title === 'ボード項目'), 'board card indexed');
+  assert.equal(store.getItems().find((i) => i.title === 'ボード項目')?.status, '完了');
+  await vscode.commands.executeCommand('markPlanner.openKanban');
+  console.log('ok: kanban opens; column add sets status');
+
   // Relative exclude globs apply to watcher events too.
   await vscode.workspace.getConfiguration('markPlanner').update('exclude', 'planner/skip/**', vscode.ConfigurationTarget.Workspace);
   await waitFor(() => store.getItems().length > 0, 'reload after exclude change');

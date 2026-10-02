@@ -99,7 +99,12 @@ export async function createItem(store: PlannerStore, date?: string): Promise<vo
  * Creates an undated task straight from the table (no prompts): it shows up in
  * the table and can be given dates or a parent there.
  */
-export async function createQuickTask(store: PlannerStore, title: string, parentId?: string): Promise<void> {
+export async function createQuickTask(
+  store: PlannerStore,
+  title: string,
+  parentId?: string,
+  status?: string,
+): Promise<void> {
   const root = vscode.workspace.workspaceFolders?.[0];
   if (!root || !title.trim()) {
     return;
@@ -114,7 +119,7 @@ export async function createQuickTask(store: PlannerStore, title: string, parent
     [p.id]: id,
     [p.title]: title.trim(),
     [p.type]: 'task',
-    [p.status]: config.statuses[0].name,
+    [p.status]: status && config.statuses.some((s) => s.name === status) ? status : config.statuses[0].name,
     ...(parentId ? { [p.parent]: parentId } : {}),
     [p.tags]: [],
   };

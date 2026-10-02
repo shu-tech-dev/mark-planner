@@ -19,6 +19,8 @@ const contexts = await Promise.all([
   esbuild.context({
     ...common,
     entryPoints: { webview: 'webview/main.ts' },
+    jsx: 'automatic',
+    jsxImportSource: 'preact',
     outdir: 'media',
     platform: 'browser',
     format: 'iife',
