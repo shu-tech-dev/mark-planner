@@ -5,6 +5,7 @@ import { ancestorTitles, parentMap } from '../src/hierarchy';
 import { MessageKey, t } from '../src/i18n';
 import { buildList, dueLabel, ListSectionId, toggleStatus } from '../src/list';
 import type { PlannerItem } from '../src/model';
+import { parseRepeat, repeatLabel } from '../src/repeat';
 import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { addDays, formatDate } from './dates';
 import { icon } from './icons';
@@ -221,10 +222,16 @@ function DueChip({ item, settings, lang, today }: { item: PlannerItem; settings:
   if (!due) {
     return null;
   }
+  const repeat = parseRepeat(item.repeat);
   return (
     <span class={`due due-${due.kind}`}>
       <Icon name="calendar" />
       {due.text}
+      {repeat && (
+        <span class="due-repeat" title={`${t(lang, 'tooltip.repeat')}: ${repeatLabel(repeat, lang)}`}>
+          <Icon name="repeat" />
+        </span>
+      )}
     </span>
   );
 }

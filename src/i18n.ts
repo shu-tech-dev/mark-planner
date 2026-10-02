@@ -36,6 +36,7 @@ const ja = {
   'table.col.remaining': '残り',
   'table.col.progress': '進捗',
   'tooltip.checklist': 'チェックリスト',
+  'tooltip.repeat': '繰り返し',
   'remaining.left': '残り{0}営業日',
   'remaining.today': '今日まで',
   'remaining.overdue': '{0}営業日超過',
@@ -156,6 +157,7 @@ const ja = {
   'msg.duplicateWarning': 'Mark Planner: IDが重複しています ({0})。ファイルをコピーした場合などに起こります。',
   'msg.reassignAction': 'IDを振り直す',
   'msg.writeFailed': 'Mark Planner: 書き込みに失敗しました: {0}',
+  'msg.nextOccurrence': '$(sync) 次回の「{0}」を作成しました: {1}（{2}）',
   'msg.settingFailed': 'Mark Planner: 設定を保存できませんでした: {0}',
 };
 
@@ -196,6 +198,7 @@ const en: Record<MessageKey, string> = {
   'table.col.remaining': 'Remaining',
   'table.col.progress': 'Progress',
   'tooltip.checklist': 'Checklist',
+  'tooltip.repeat': 'Repeats',
   'remaining.left': '{0} workdays left',
   'remaining.today': 'Due today',
   'remaining.overdue': '{0} workdays overdue',
@@ -314,6 +317,7 @@ const en: Record<MessageKey, string> = {
   'msg.duplicateWarning': 'Mark Planner: Duplicate IDs ({0}). This happens e.g. when a file is copied.',
   'msg.reassignAction': 'Reassign IDs',
   'msg.writeFailed': 'Mark Planner: Failed to write: {0}',
+  'msg.nextOccurrence': '$(sync) Created the next "{0}": {1} ({2})',
   'msg.settingFailed': 'Mark Planner: Failed to save setting: {0}',
 };
 

@@ -6,7 +6,7 @@ import { generateId } from './id';
 import { t } from './i18n';
 import { ItemType, normalizeDate } from './model';
 import { renderTemplate } from './settings';
-import { PlannerStore, writeFrontmatter } from './store';
+import { fileExists as exists, PlannerStore, writeFrontmatter } from './store';
 
 const encoder = new TextEncoder();
 
@@ -14,15 +14,6 @@ function today(): string {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
-
-async function exists(uri: vscode.Uri): Promise<boolean> {
-  try {
-    await vscode.workspace.fs.stat(uri);
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 /** Prompts for title/type and creates `<folder>/<date>-<title>.md`. */

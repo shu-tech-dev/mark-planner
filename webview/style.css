@@ -1793,6 +1793,9 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev:hover {
   width: 12px;
   height: 12px;
 }
+.due-repeat {
+  display: inline-flex;
+}
 .due-overdue {
   color: var(--mp-danger);
 }

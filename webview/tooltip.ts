@@ -3,6 +3,7 @@ import { formatDisplayDate } from '../src/dateFormat';
 import { ancestorTitles, parentMap } from '../src/hierarchy';
 import { MessageKey, t } from '../src/i18n';
 import type { PlannerItem } from '../src/model';
+import { parseRepeat, repeatLabel } from '../src/repeat';
 import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { formatDate } from './dates';
 import { progressElement } from './progress';
@@ -75,6 +76,11 @@ export function itemTooltip(item: PlannerItem, ctx: TooltipContext, options: Too
       row(tr('table.col.remaining'), el('span', `remaining ${remaining.kind}`, remainingLabel(remaining, lang)));
     }
     card.append(rows);
+  }
+  const repeat = parseRepeat(item.repeat);
+  if (repeat) {
+    const rows = card.querySelector('.tt-rows') ?? card.appendChild(el('dl', 'tt-rows'));
+    rows.append(el('dt', '', tr('tooltip.repeat')), el('dd', '', repeatLabel(repeat, lang)));
   }
   const progress = progressElement(item);
   if (progress) {

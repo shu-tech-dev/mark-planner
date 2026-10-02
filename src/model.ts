@@ -15,6 +15,8 @@ export interface PlannerItem {
   tags: string[];
   parent?: string;
   depends: string[];
+  /** Raw `repeat` value (e.g. `weekly`); see parseRepeat. */
+  repeat?: string;
   /** Workspace-relative path, for display. */
   path: string;
   /** Task list items in the body (`- [ ]` / `- [x]`), when there are any. */
@@ -31,6 +33,7 @@ export interface PropertyMap {
   tags: string;
   parent: string;
   depends: string;
+  repeat: string;
 }
 
 export const DEFAULT_PROPERTY_MAP: PropertyMap = {
@@ -43,6 +46,7 @@ export const DEFAULT_PROPERTY_MAP: PropertyMap = {
   tags: 'tags',
   parent: 'parent',
   depends: 'depends',
+  repeat: 'repeat',
 };
 
 const DATE_RE = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2})(?::\d{2})?)?$/;
@@ -116,6 +120,7 @@ export function toPlannerItem(
     tags: asStringList(data[props.tags]),
     parent: asString(data[props.parent]),
     depends: asStringList(data[props.depends]),
+    ...(asString(data[props.repeat]) ? { repeat: asString(data[props.repeat]) } : {}),
     path,
   };
 }

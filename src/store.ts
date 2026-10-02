@@ -1,11 +1,23 @@
 import * as vscode from 'vscode';
-import { getConfig } from './config';
+import { getConfig, getLang } from './config';
 import { countChecklist } from './checklist';
+import { formatDisplayDate } from './dateFormat';
+import { baseFileName, uniqueFileName } from './filename';
 import { splitFrontmatter, updateFrontmatter } from './frontmatter';
+import { t } from './i18n';
 import { generateId } from './id';
 import { PlannerItem, toPlannerItem } from './model';
+import { nextOccurrence, parseRepeat, repeatLabel, uncheckChecklist } from './repeat';
+import { resolveStatus } from './settings';
 
 const decoder = new TextDecoder();
+const encoder = new TextEncoder();
+
+function today(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 
 /** Indexes dated Markdown files in the workspace and keeps them in sync. */
 export class PlannerStore implements vscode.Disposable {
@@ -91,15 +103,65 @@ export class PlannerStore implements vscode.Disposable {
     this.fireChange();
   }
 
-  /** Rewrites frontmatter keys of an indexed file; assigns an ID if it has none. */
+  /**
+   * Rewrites frontmatter keys of an indexed file; assigns an ID if it has none.
+   * Completing a repeating task first creates its next occurrence, which takes
+   * over the `repeat` key (so unchecking and re-checking does not repeat twice).
+   */
   async patch(key: string, patch: Record<string, unknown>): Promise<void> {
     const item = this.items.get(key);
-    const { properties } = getConfig();
+    const { properties, statuses } = getConfig();
+    const uri = vscode.Uri.parse(key);
     const fullPatch = { ...patch };
     if (item && !item.id && !(properties.id in fullPatch)) {
       fullPatch[properties.id] = generateId(this.takenIds());
     }
-    await writeFrontmatter(vscode.Uri.parse(key), fullPatch);
+    const newStatus = fullPatch[properties.status];
+    if (
+      item?.type === 'task' &&
+      typeof newStatus === 'string' &&
+      resolveStatus(newStatus, statuses).done &&
+      !resolveStatus(item.status, statuses).done &&
+      (await this.createNextOccurrence(uri, item))
+    ) {
+      fullPatch[properties.repeat] = undefined;
+    }
+    await writeFrontmatter(uri, fullPatch);
+  }
+
+  /**
+   * Copies a repeating task to `<new id>-<title>.md` next to it, with the next
+   * dates, the first status and its checklist unchecked. False when the task
+   * does not repeat (or has no dates to move).
+   */
+  private async createNextOccurrence(uri: vscode.Uri, item: PlannerItem): Promise<boolean> {
+    const rule = parseRepeat(item.repeat);
+    const dates = rule && nextOccurrence(item, rule, today());
+    if (!rule || !dates) {
+      return false;
+    }
+    const { properties: p, statuses } = getConfig();
+    const text = (await vscode.workspace.openTextDocument(uri)).getText();
+    const { bodyStart } = splitFrontmatter(text);
+    const id = generateId(this.takenIds());
+    const newText = updateFrontmatter(text.slice(0, bodyStart) + uncheckChecklist(text.slice(bodyStart)), {
+      [p.id]: id,
+      [p.status]: statuses[0].name,
+      ...(dates.start ? { [p.start]: dates.start } : {}),
+      ...(dates.end ? { [p.end]: dates.end } : {}),
+    });
+    const folder = vscode.Uri.joinPath(uri, '..');
+    const fileName = await uniqueFileName(baseFileName(id, item.title), (name) =>
+      fileExists(vscode.Uri.joinPath(folder, name)),
+    );
+    await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(folder, fileName), encoder.encode(newText));
+    const lang = getLang();
+    const date = formatDisplayDate((dates.start ?? dates.end)!, getConfig().dateFormat, lang);
+    vscode.window.setStatusBarMessage(
+      t(lang, 'msg.nextOccurrence', item.title, date, repeatLabel(rule, lang)),
+      5000,
+    );
+    return true;
   }
 
   dispose(): void {
@@ -156,6 +218,15 @@ function isExcluded(uri: vscode.Uri, exclude: string): boolean {
       languageId: '',
     } as unknown as vscode.TextDocument) > 0
   );
+}
+
+export async function fileExists(uri: vscode.Uri): Promise<boolean> {
+  try {
+    await vscode.workspace.fs.stat(uri);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**

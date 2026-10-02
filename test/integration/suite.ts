@@ -148,6 +148,38 @@ export async function run(): Promise<void> {
   await waitFor(() => store.getItems().find((i) => i.title === 'checks')?.checklist?.done === 3, 'checklist updated');
   console.log('ok: checklist progress indexed and updated');
 
+  // Completing a repeating task creates the next one, which takes over `repeat`.
+  const weeklyUri = vscode.Uri.joinPath(root, 'planner/week01-weekly.md');
+  await vscode.workspace.fs.writeFile(
+    weeklyUri,
+    new TextEncoder().encode(
+      `---\nid: week01\ntitle: weekly\nstatus: 未着手\nend: ${todayIso} # due\nrepeat: weekly\n---\n- [x] a\n- [ ] b\n`,
+    ),
+  );
+  await waitFor(() => store.getItems().some((i) => i.id === 'week01'), 'repeating task indexed');
+  const weekly = store.getItems().find((i) => i.id === 'week01')!;
+  assert.equal(weekly.repeat, 'weekly');
+  await store.patch(weekly.key, { status: '完了' });
+  await waitFor(() => store.getItems().filter((i) => i.title === 'weekly').length === 2, 'next occurrence indexed');
+  const next = store.getItems().find((i) => i.title === 'weekly' && i.id !== 'week01')!;
+  const nextDue = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+  assert.equal(next.end, `${nextDue.getFullYear()}-${pad(nextDue.getMonth() + 1)}-${pad(nextDue.getDate())}`);
+  assert.equal(next.status, '未着手');
+  assert.equal(next.repeat, 'weekly');
+  assert.equal(next.path, `planner/${next.id}-weekly.md`);
+  assert.deepEqual(next.checklist, { done: 0, total: 2 });
+  assert.match(await read(next.path), /# due$/m);
+  await waitFor(() => store.get(weekly.key)?.status === '完了', 'original completed');
+  assert.equal(store.get(weekly.key)?.repeat, undefined);
+  // Unchecking and checking again does not create another one.
+  await store.patch(weekly.key, { status: '未着手' });
+  await waitFor(() => store.get(weekly.key)?.status === '未着手', 'unchecked');
+  await store.patch(weekly.key, { status: '完了' });
+  await waitFor(() => store.get(weekly.key)?.status === '完了', 'checked again');
+  await new Promise((r) => setTimeout(r, 300));
+  assert.equal(store.getItems().filter((i) => i.title === 'weekly').length, 2);
+  console.log('ok: completing a repeating task creates the next occurrence');
+
   // Relative exclude globs apply to watcher events too.
   await vscode.workspace.getConfiguration('markPlanner').update('exclude', 'planner/skip/**', vscode.ConfigurationTarget.Workspace);
   await waitFor(() => store.getItems().length > 0, 'reload after exclude change');

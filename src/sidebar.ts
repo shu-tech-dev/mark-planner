@@ -5,6 +5,7 @@ import { ancestorTitles, parentMap } from './hierarchy';
 import { MessageKey, t } from './i18n';
 import { buildList, dueLabel, DueKind, ListSectionId, toggleStatus } from './list';
 import type { PlannerItem } from './model';
+import { parseRepeat, repeatLabel } from './repeat';
 import { PlannerStore } from './store';
 
 type Node = { kind: 'section'; id: ListSectionId; items: PlannerItem[] } | { kind: 'task'; item: PlannerItem };
@@ -101,7 +102,9 @@ export class TaskTreeProvider implements vscode.TreeDataProvider<Node>, vscode.D
     const item = new vscode.TreeItem(task.title, vscode.TreeItemCollapsibleState.None);
     item.id = `task:${task.key}`;
     const checklist = task.checklist ? `☑ ${task.checklist.done}/${task.checklist.total}` : undefined;
-    item.description = [due?.text, checklist, ancestors[0]].filter(Boolean).join(' · ');
+    const repeat = parseRepeat(task.repeat);
+    const dueText = due && repeat ? `${due.text} ↻` : due?.text;
+    item.description = [dueText, checklist, ancestors[0]].filter(Boolean).join(' · ');
     item.iconPath = new vscode.ThemeIcon(
       'circle-large-outline',
       due && DUE_COLOR[due.kind] ? new vscode.ThemeColor(DUE_COLOR[due.kind]!) : undefined,
@@ -117,6 +120,9 @@ export class TaskTreeProvider implements vscode.TreeDataProvider<Node>, vscode.D
     tooltip.appendMarkdown(`**${task.title.replace(/[\\`*_[\]<>]/g, '\\$&')}**\n\n`);
     if (due) {
       tooltip.appendText(`${due.text}${remaining ? ` — ${remainingLabel(remaining, lang)}` : ''}\n\n`);
+    }
+    if (repeat) {
+      tooltip.appendText(`${t(lang, 'tooltip.repeat')}: ${repeatLabel(repeat, lang)}\n\n`);
     }
     tooltip.appendText(task.path);
     item.tooltip = tooltip;
