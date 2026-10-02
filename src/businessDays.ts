@@ -77,11 +77,14 @@ export function remainingSortKey(r: Remaining | undefined): number | undefined {
 export function remainingLabel(r: Remaining, lang: Lang): string {
   switch (r.kind) {
     case 'left':
-      return t(lang, 'remaining.left', r.days);
+      return r.days === 1 ? t(lang, 'remaining.left1') : t(lang, 'remaining.left', r.days);
     case 'today':
       return t(lang, 'remaining.today');
     case 'overdue':
       // Past the deadline only by days off (e.g. due Friday, today Sunday).
-      return r.days === 0 ? t(lang, 'remaining.overdueSoft') : t(lang, 'remaining.overdue', r.days);
+      if (r.days === 0) {
+        return t(lang, 'remaining.overdueSoft');
+      }
+      return r.days === 1 ? t(lang, 'remaining.overdue1') : t(lang, 'remaining.overdue', r.days);
   }
 }

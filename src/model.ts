@@ -98,8 +98,9 @@ function asStringList(value: unknown): string[] {
 }
 
 /**
- * Returns undefined unless the frontmatter has a usable date or an ID
- * (undated items with an ID can still act as parents).
+ * Returns undefined unless the frontmatter has a usable date, or an ID together
+ * with a planner `type` or a `status` (undated tasks and parents). An `id` alone is
+ * not enough: other tools (e.g. Docusaurus) put one in every page.
  */
 export function toPlannerItem(
   data: Record<string, unknown>,
@@ -110,7 +111,9 @@ export function toPlannerItem(
   const start = normalizeDate(data[props.start]);
   const end = normalizeDate(data[props.end]);
   const id = asString(data[props.id]);
-  if (!start && !end && !id) {
+  const rawType = asString(data[props.type]);
+  const plannerShaped = (rawType && toItemType(rawType) === rawType) || asString(data[props.status]) !== undefined;
+  if (!start && !end && !(id && plannerShaped)) {
     return undefined;
   }
   const fileTitle = path.split('/').pop()!.replace(/\.md$/i, '');

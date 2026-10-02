@@ -1,215 +1,184 @@
 # Mark Planner
 
-1ファイル = 1つの予定/タスク。frontmatterに日付を書いたMarkdownファイルを、VS Code上のカレンダーとガントチャートで表示・編集します。
+English | [日本語](README.ja.md)
 
-## 書式
+One file = one task or event. Mark Planner shows Markdown files with dates in their frontmatter as a **calendar, Gantt chart, table, kanban board and to-do list** right inside VS Code — and lets you edit them there. Your plans stay plain Markdown: diffable, greppable and versioned with Git.
+
+![Calendar](images/en/calendar.png)
+
+| Gantt chart | Board |
+|---|---|
+| ![Gantt chart](images/en/gantt.png) | ![Board](images/en/kanban.png) |
+| **List** | **Editor dialog** |
+| ![List](images/en/list.png) | ![Editor dialog](images/en/editor.png) |
+
+## Features
+
+- **Five views** of the same files: month/week/day calendar, Gantt chart with parent/child rows and dependency arrows, a Notion-like table, a kanban board by status and a Todoist-like list grouped by deadline.
+- **Edit anywhere:** drag events and bars to move or resize them, drag cards between columns, edit table cells, or open the editor dialog with a click.
+- **Plain files:** every change is a small frontmatter edit made through VS Code (undo works, comments and key order are kept).
+- **Tasks done right:** priorities, repeating tasks, checklist progress from the body, remaining workdays, parent tasks and dependencies.
+- **Days off:** weekends, Japanese public holidays (optional) and your own vacations are colored and skipped when counting workdays.
+- **Sidebar:** open tasks by deadline in the activity bar, with a badge for overdue + today.
+- English and Japanese UI, light and dark themes.
+
+## Getting started
+
+1. Open a folder and run **Mark Planner: New Task/Event** (or click **+ New** in the planner panel).
+2. Fill in the dialog. The file is created as `planner/<id>-<title>.md`.
+3. Open the views with **Mark Planner: Open Calendar** (Gantt / Table / Board / List) or the Mark Planner icon in the activity bar.
+
+Files you already have work too — anything matching the format below shows up.
+
+## File format
 
 ```markdown
 ---
-id: tk2m9a            # 作成時刻から自動生成。parent/depends はこのIDで参照する
-title: 設計レビュー
-type: task            # task | event | holiday（休暇）
-status: todo          # todo | doing | done
-priority: 1           # 1=高 / 2=中 / 3=低（任意）
-start: 2026-10-06     # 時刻付きなら 2026-10-06T10:00
-end: 2026-10-08       # 終了日（この日を含む）。end のみなら締切扱い
+id: tk2m9a            # generated from the creation time; parent/depends refer to it
+title: Design review
+type: task            # task | event | holiday (your vacation)
+status: todo          # todo | doing | done (configurable)
+priority: 1           # 1 = high, 2 = medium, 3 = low (optional)
+start: 2026-10-06     # or 2026-10-06T10:00
+end: 2026-10-08       # inclusive; end only = a deadline
 tags: []
 parent: a8d2m1
 depends: [p0q7z4]
-repeat: weekly        # 繰り返し（任意）。完了すると次回のファイルを作る
+repeat: weekly        # optional; completing it creates the next one
 ---
 
-本文は自由
+Free-form body. Task list items (- [ ] / - [x]) count as progress.
 ```
 
-`start` または `end` を持つファイルが対象です。`id` だけを持つ日付なしのファイルも、親タスクとして使えます。
+A file is included when it has a `start` or `end`. Undated files are included when they have an `id` **and** a planner `type` (task / event / holiday) or a `status` — so pages from other tools that only carry an `id` (e.g. Docusaurus) are left alone. Different key names can be mapped with the `markPlanner.properties` setting (e.g. `{"end": "due"}`).
 
-## ID とファイル名
+### IDs and file names
 
-新規作成したファイルは `tk2m9a-設計レビュー.md` のように ID を頭に付けます。
+New files are named `<id>-<title>.md`, e.g. `tk2m9a-Design review.md`.
 
-- ID は作成時刻（2020年からの秒数）の36進数なので、ファイル名順＝作成順になる。
-- ID は変わらないので、日付を動かしてもファイル名は古くならない。`Ctrl+P` で ID を打てばファイルが開ける。
-- 正は frontmatter の `id`。ファイル名を手で変えても参照は壊れない。
+- The ID is the creation time (seconds since 2020) in base 36, so sorting by file name sorts by creation.
+- The ID never changes, so moving dates never makes a file name stale. Type the ID in `Ctrl+P` to open the file.
+- The frontmatter `id` is what counts; renaming a file by hand does not break references.
+- If you copy a file, Mark Planner notices the duplicate ID and offers to give the copy a new one (and rename it).
 
-## 親子関係
+## Views
 
-子タスクに `parent: <親のid>` を書きます。
+### Calendar
 
-- ガント：親の直下に子が並び、子の名前には `└` が付きます。親のバーはグレーで表示します。
-- 親に日付がない場合は、子タスクの期間からバーを算出し、点線で表示します（ドラッグしても変更されません）。
-- カレンダー：予定にマウスを乗せると `v1リリース › 実装 › API実装` のように親の名前が出ます。
+Month, week and day views. Drag to move, drag the edge to resize, click a day to create an item on that day. Hover for a tooltip with the parent path, status, dates, workdays and tags.
 
-## 休日・祝日・休暇
+### Gantt chart
 
-- **週末:** 設定した曜日をその曜日の色で塗ります（既定は土曜=青、日曜=赤）。カレンダーでは日付の数字と曜日の見出しも同じ色になります。
-- **祝日:** 日本の祝日（振替休日・国民の休日を含む、1970〜2050年）を祝日の色（既定は赤）で塗り、土日と重なる場合は祝日を優先します。カレンダーには祝日名も出します。データは [@holiday-jp/holiday_jp](https://github.com/holiday-jp/holiday_jp-js) を同梱しており、通信はしません。
-- **休暇:** `type: holiday` のファイルが自分の休暇です。カレンダーではバー（ドラッグで日付変更可）と日の塗りで、ガントでは列の塗りで表示します。「＋ 新規」のダイアログで種類を「休暇」にすると作れます。
+Parents are followed by their children (`└`); `depends` draws arrows. A parent without dates gets a dotted bar spanning its children. Bars show progress (checklist ratio, or the status's configured progress). Day / Week / Month scales.
 
-```markdown
----
-id: vac008
-title: 有給休暇
-type: holiday
-start: 2026-10-19
-end: 2026-10-20
----
-```
+### Table
 
-## 編集ダイアログ
+All items in a sortable, filterable table with tree indentation (collapse with ▾). Click a cell to edit title, type, status, priority, dates, tags or parent. Group by status or type; choose, reorder and resize columns. Type a title in the last row to add an undated task. Sorting, filters and columns are saved per workspace.
 
-カレンダー・ガント（ダブルクリック）・カンバン・リストで項目をクリックすると、専用の編集ダイアログが開きます。「＋ 新規」とカレンダーの日付クリック、コマンド `Mark Planner: 新規タスク/予定` でも同じダイアログで新規作成します（クリックした日付が開始日に入ります）。
+### Board
 
-- **項目:** タイトル、種類、ステータス、優先度、開始、期限（予定・休暇は終了）、繰り返し、タグ、親。日付は `YYYY/MM/DD`（時刻付きは `YYYY/MM/DD HH:mm`）で、入力欄を選ぶとカレンダーが出ます。
-- **本文:** 読み取り専用で表示し、チェックリストの ☑ だけここで切り替えられます。本文の編集は「ファイルを開く」から。
-- **保存:** 変更はダイアログの中だけで持ち、「保存」（`Ctrl+Enter`、タイトル欄では `Enter`）でまとめて書き込みます。変わった項目だけを書き換えるので、他のキーやコメントはそのままです。未保存のまま `Esc` / 「キャンセル」を押すと確認が出て、もう一度で破棄します。
-- **その他:** 「ファイルを開く」で Markdown を横に開き、「削除」で確認のうえファイルをゴミ箱へ移します。ファイルを直接開きたいときは項目を Alt+クリックします。
+One column per status. Drag a card to change its status. Cards are ordered by urgency (overdue → due today → fewest workdays left), then priority. **Add** at the bottom of a column creates a task with that status.
 
-## テーブル
+### List
 
-上部の「テーブル」で、全件を Notion のデータベースのような表で一覧できます。
+Todoist-style sections: Overdue / Today / Tomorrow / This week / Later / No date. Check the circle to complete a task (unchecking restores the first status). **Add task** under Today, Tomorrow or No date creates a task due then. Within a day, higher priority comes first.
 
-- **セルで直接編集:** タイトル・種類・ステータス・優先度・開始・終了・タグ・親をクリックして編集すると frontmatter に書き戻します（Enter / フォーカスを外すと確定、Esc で取り消し）。行にマウスを乗せると出る「ファイルを開く」で本文を開けます。
-- **ツリー表示:** 親の下に子を字下げして並べ、▾ で折りたためます。
-- **並べ替え:** 列見出しをクリック（昇順 → 降順 → 解除）。兄弟の中で並べ替えます。
-- **絞り込み:** タイトル検索、種類・ステータス・タグのフィルター。該当項目の親も文脈として表示します。
-- **グループ化:** ステータス別・種類別。
-- **列:** 表示／非表示と並び順を「列」メニューで、幅は見出しの右端をドラッグで変更。
-- **新規行:** 最下行にタイトルを入力して Enter で、日付なしのタスクを作成します。
+### Editor dialog
 
-並べ替え・絞り込み・列の設定はワークスペースごとに保存されます。
+Clicking an item in the calendar, board or list (double-click in the Gantt chart) opens the editor dialog; **Alt+click** opens the file instead. **+ New**, a calendar day click and the New Task/Event command use the same dialog.
 
-## カンバン
+- Title, type, status, priority, start, due/end, repeat, tags and parent. Dates are `YYYY/MM/DD` (or `YYYY/MM/DD HH:mm`) with a date picker.
+- The body is shown read-only; task list checkboxes can be toggled right there.
+- Changes are saved together with **Save** (`Ctrl+Enter`, or `Enter` in the title). Only changed keys are written. Closing with unsaved changes asks for a second press.
+- **Open file** opens the Markdown beside the planner; **Delete** moves the file to the trash after confirmation.
 
-上部の「カンバン」で、タスクをステータスごとの列に並べます（列の順と色は設定のステータスに従います）。
+### Sidebar
 
-- カードを別の列へドラッグすると、その `status` を書き換えます。
-- 列の中は期限順（期限超過 → 今日まで → 残り営業日が少ない順、日付なしは最後）に自動で並びます。
-- 列下の「追加」でタイトルを入力して Enter すると、その列のステータスで日付なしのタスクを作成します。
-- カードのクリックで[編集ダイアログ](#編集ダイアログ)を開き（Alt+クリックでファイル）、マウスを乗せるとツールチップを表示します。
+The Mark Planner icon in the activity bar lists open tasks in the same sections as the list. The icon color shows urgency and the badge counts overdue + today. Click to open the file; ✓ completes the task.
 
-## リスト
+## Tasks
 
-上部の「リスト」で、Todoist のように期限ごとの区切りでタスクを並べます：期限切れ / 今日 / 明日 / 今週（週の開始曜日の設定に従う）/ 来週以降 / 日付なし。
+### Priorities
 
-- 左の丸いチェックで完了（設定で「完了扱い」の最初のステータスになる）。少し残ってから消え、チェックを外すと先頭のステータスに戻ります。
-- 「完了済みを表示」で、完了したタスクを最後にまとめて表示します（設定はワークスペースごとに保存）。
-- 「今日」「明日」「日付なし」の「タスクを追加」で、その日が期限のタスク（または日付なし）を作成します。
-- 期限の表示は 今日（緑）/ 明日（橙）/ 今週は曜日 / 期限切れ（赤）。行のクリックで編集ダイアログを開き（Alt+クリックでファイル）、マウスを乗せるとツールチップを表示します。
+`priority: 1` (high) / `2` (medium) / `3` (low); `p1`–`p3`, `high`/`medium`/`low` also work. Shown as red / orange / blue flags in the list, board, table, tooltips and sidebar.
 
-## サイドバー
+### Repeating tasks
 
-アクティビティバーの Mark Planner アイコンから、未完了のタスクをリストと同じ区切り（期限切れ / 今日 / 明日 / 今週 / 来週以降 / 日付なし）で一覧できます。
+Add `repeat` to a task. When you complete it from the planner, a copy is created for the next occurrence: a new ID and file, the first status, the dates moved forward and the checklist unchecked. The completed file stays as a record, and `repeat` moves to the new file.
 
-- アイコンの色: 期限切れ＝赤、今日＝緑、明日＝橙。アクティビティバーのバッジは「期限切れ＋今日」の件数。
-- クリックでファイルを開き、行の ✓（または右クリック）で完了にします。
-- ビュー上部のボタンで新規作成・リスト・カレンダーを開けます。日付が変わると自動で区切りを更新します。
-
-## チェックリストの進捗
-
-本文の Markdown タスクリスト（`- [ ]` / `- [x]`、`*` `+` `1.` も可）を数えて進捗を表示します。入れ子の項目も同じ重さで数え（GitHub と同じ）、コードブロック内は数えません。
-
-```markdown
-- [x] API設計
-- [ ] 画面
-    - [x] 一覧画面
-    - [ ] 詳細画面
-- [ ] テスト
-```
-
-→ 2/5（40%）。テーブルの「進捗」列、カンバン・リストのカード、ツールチップ、サイドバーに `2/5` とバーで表示し、ガントの進捗バーにも使います。全部チェック済みは緑で表示します（ステータスは自動では変えません）。チェックリストがないタスクはステータスの進捗率、完了扱いのステータスは常に 100% です。
-
-## 優先度
-
-タスクに `priority: 1`（高）/ `2`（中）/ `3`（低）を書きます。`p1`〜`p3`、`high` / `medium` / `low`、`高` / `中` / `低` も読めます。書かなければ優先度なしです。
-
-- **並び順:** リストは同じ期限日の中で優先度の高い順（時刻より優先）、カンバンは残り営業日が同じなら優先度の高い順。
-- **表示:** 赤 P1・橙 P2・青 P3 の旗を、リスト・カンバンのカード・テーブル・ツールチップ・サイドバーに出します。リストのチェックの丸も優先度の色になります。
-- **テーブル:** 「優先度」列をクリックして変更でき、見出しで並べ替えられます（優先度なしは常に最後）。
-
-## 繰り返しタスク
-
-`repeat` を書いたタスクは、完了にすると次回分を新しいファイルとして作ります。終わった回のファイルは完了のまま記録として残ります。
-
-```markdown
----
-id: tk3a01
-title: 週次報告
-type: task
-status: todo
-end: 2026-10-09
-repeat: weekly
----
-
-- [ ] 数字の集計
-- [ ] 送信
-```
-
-| 書き方 | 間隔 |
+| Value | Interval |
 |---|---|
-| `daily` / `毎日`、`every 3 days` / `3日ごと` | 日 |
-| `weekly` / `毎週`、`biweekly` / `隔週`、`every 2 weeks` / `2週ごと` | 週 |
-| `monthly` / `毎月`、`every 3 months` / `3か月ごと` | 月（31日 → 2月は月末） |
-| `yearly` / `毎年`、`every 2 years` / `2年ごと` | 年 |
-| `weekdays` / `平日` | 月〜金 |
+| `daily`, `every 3 days` | days |
+| `weekly`, `biweekly`, `every 2 weeks` | weeks |
+| `monthly`, `every 3 months` | months (Jan 31 → Feb 28) |
+| `yearly`, `every 2 years` | years |
+| `weekdays` | Monday–Friday |
 
-- **次回のファイル:** 元のファイルを丸ごとコピーし、新しい ID（ファイル名も `<新ID>-タイトル.md`）、先頭のステータス、ずらした日付を入れ、本文のチェックリストは未チェックに戻します。同じフォルダに作ります。
-- **日付:** `start` と `end` を同じ日数だけずらすので、期間と時刻はそのままです。期限から遅れて完了した場合は、期限が今日以降になるまで進めます（期限切れのコピーが溜まらない）。
-- **`repeat` の引き継ぎ:** `repeat` は次回のファイルに移り、完了した方からは消えます。チェックを外して付け直しても、二重には作りません。繰り返しをやめるには `repeat` 行を消します。
-- **対象:** 画面から完了にしたとき（リストのチェック、カンバンのドラッグ、テーブルのステータス編集、サイドバーの ✓）。エディタで `status` を直接書き換えた場合は作りません。日付のないタスクと、`type: event` は対象外です。
-- **表示:** リストとサイドバーの期限に ↻ を付け、ツールチップに「繰り返し: 毎週」と出します。
+`start` and `end` move by the same number of days, keeping the span and time. If you complete a task late, it advances until the deadline is today or later, so overdue copies do not pile up. Editing `status` by hand in the file does not create the next occurrence.
 
-## ツールチップ
+### Checklist progress
 
-カレンダーの予定とガントのバーにマウスを乗せると、共通デザインのツールチップを表示します（親の階層、種類・ステータス、日付、期間の営業日数、残り営業日、タグ、ファイルパス）。
+Task list items in the body (`- [ ]` / `- [x]`, also `*`, `+`, `1.`) are counted, nested ones included and code blocks skipped. Progress shows as `2/5` with a bar in the table, board, list, tooltips and sidebar, and drives the Gantt progress bar.
 
-## 残り営業日
+### Remaining workdays
 
-未完了のタスクについて、期限（`end`、なければ `start`）までの残り営業日を表示します。
+Open tasks show the workdays left until their deadline (`end`, else `start`), counting today and the deadline and skipping weekends, Japanese holidays (when shown) and your vacations: "3 workdays left", "Due today", "2 workdays overdue".
 
-- 営業日から除く日: 「休日の曜日と色」で設定した曜日、日本の祝日（祝日表示がオンのとき）、自分の休暇（`type: holiday`）
-- 今日と期限日の両方を含めて数えます（今日=月・期限=水なら「残り3営業日」）。期限が今日なら「今日まで」、過ぎていれば「2営業日超過」（期限の翌日から今日までの営業日数）。
-- 表示場所: テーブルの「残り」列（並べ替えると期限超過 → 今日まで → 残りが少ない順）と、カレンダーの予定・ガントのバーにマウスを乗せたときのツールチップ（期間の営業日数も表示）。
+### Days off
 
-## コマンド
+- **Weekends** are colored per weekday (Sunday red and Saturday blue by default; configurable).
+- **Japanese public holidays** (1970–2050, bundled data, no network) are shown by default; turn them off with `markPlanner.showHolidays`.
+- **Vacations** are files with `type: holiday`.
 
-- `Mark Planner: カレンダーを開く` / `ガントチャートを開く` / `テーブルを開く` / `カンバンを開く` / `リストを開く` / `設定を開く`
-- `Mark Planner: 新規タスク/予定` — パネルを開いて新規作成ダイアログを出す（`planner/<id>-タイトル.md` を作成）
-- `Mark Planner: 重複IDを振り直す` — コピー側に新しいIDを振り、ファイル名の頭のIDも付け替える
+## Settings
 
-## 設定
+Open **⚙** in the planner panel (or **Mark Planner: Open Settings**). Values are stored in the workspace settings (`.vscode/settings.json`) and are also editable in the standard Settings UI.
 
-パネル右上の「⚙ 設定」タブ（またはコマンド `Mark Planner: 設定を開く`）で変更できます。保存先はワークスペース設定（`.vscode/settings.json`）で、VS Code 標準の設定画面からも同じ値を編集できます。
-
-| キー | 既定値 | 説明 |
+| Key | Default | Description |
 |---|---|---|
-| `markPlanner.include` / `exclude` | `**/*.md` / `**/node_modules/**` | 読み込む／除外するファイル |
-| `markPlanner.newItemFolder` | `planner` | 新規ファイルの保存先 |
-| `markPlanner.template.body` | `""` | 新規ファイルの本文。`{{title}}` `{{date}}` を置換 |
-| `markPlanner.template.frontmatter` | `{}` | 新規ファイルに追加する frontmatter |
-| `markPlanner.properties` | `{}` | キー名の読み替え（例: `{"end": "due"}`） |
-| `markPlanner.statuses` | todo / doing / done | ステータスの値・表示名・色・進捗率・完了扱い。先頭が新規作成時の初期値 |
-| `markPlanner.eventColor` | `#b180d7` | `type: event` の色 |
-| `markPlanner.tabOrder` | `["calendar", "gantt", "table", "kanban", "list"]` | 上部バーのタブの順番（書き漏れたタブは末尾に追加） |
-| `markPlanner.theme` | `auto` | 画面のテーマ（`auto` = VS Code に合わせる / `light` / `dark`） |
-| `markPlanner.dateFormat` | `auto` | 画面での日付の表示形式（ファイルは `YYYY-MM-DD` のまま）。`auto` は今年の年を省略。記号 `YYYY` `YY` `M` `MM` `MMM` `MMMM` `D` `DD` `ddd` `dddd`、文字は `[...]` で囲む |
-| `markPlanner.calendarView` | `month` | カレンダーの初期表示 |
-| `markPlanner.weekStart` | `0`（日曜） | 週の開始曜日 |
-| `markPlanner.ganttViewMode` | `Day` | ガントの初期スケール |
-| `markPlanner.hideDone` | `false` | 完了扱いのタスクを表示しない |
-| `markPlanner.maxEventsPerDay` | `0`（無制限） | カレンダーで1日に表示する件数。0 なら全件表示してマスを縦に伸ばし、n なら超えた分を「他 N 件」にまとめる |
-| `markPlanner.weekendColors` | `{"0": "#f14c4c", "6": "#3794ff"}`（日=赤, 土=青） | 休日として塗る曜日と色 |
-| `markPlanner.showHolidays` | `true` | 日本の祝日を表示する |
-| `markPlanner.holidayColor` / `vacationColor` | `#f14c4c` / `#2ea043` | 祝日／休暇の色 |
-| `markPlanner.language` | `auto` | 画面と通知の言語（`auto` / `ja` / `en`）。コマンド名と標準設定画面の文言は VS Code の表示言語に従います |
+| `markPlanner.include` / `exclude` | `**/*.md` / `**/node_modules/**` | Files to read / skip |
+| `markPlanner.newItemFolder` | `planner` | Folder for new files |
+| `markPlanner.template.body` | `""` | Body of new files; `{{title}}` and `{{date}}` are replaced |
+| `markPlanner.template.frontmatter` | `{}` | Extra frontmatter for new files |
+| `markPlanner.properties` | `{}` | Key names to read instead of the defaults, e.g. `{"end": "due"}` |
+| `markPlanner.statuses` | todo / doing / done | Status values, labels, colors, progress and which count as done. The first is used for new tasks |
+| `markPlanner.eventColor` | `#b180d7` | Color of `type: event` |
+| `markPlanner.tabOrder` | calendar, gantt, table, kanban, list | Order of the view tabs |
+| `markPlanner.theme` | `auto` | `auto` (follow VS Code) / `light` / `dark` |
+| `markPlanner.dateFormat` | `auto` | Display format, e.g. `YYYY/MM/DD` or `MMM D`. Files always use `YYYY-MM-DD` |
+| `markPlanner.calendarView` | `month` | Initial calendar view |
+| `markPlanner.weekStart` | `0` (Sunday) | First day of the week |
+| `markPlanner.ganttViewMode` | `Day` | Initial Gantt scale |
+| `markPlanner.hideDone` | `false` | Hide completed tasks |
+| `markPlanner.maxEventsPerDay` | `0` (no limit) | Items per calendar day before "+N more" |
+| `markPlanner.weekendColors` | `{"0": "#f14c4c", "6": "#3794ff"}` | Days off by weekday and their colors |
+| `markPlanner.showHolidays` | `true` | Show Japanese public holidays |
+| `markPlanner.holidayColor` / `vacationColor` | `#f14c4c` / `#2ea043` | Colors for holidays / vacations |
+| `markPlanner.language` | `auto` | UI language: `auto` / `en` / `ja` |
 
-## 開発
+## Commands
+
+- **Mark Planner: Open Calendar / Open Gantt Chart / Open Table / Open Board / Open List / Open Settings**
+- **Mark Planner: New Task/Event** — opens the planner with the new-item dialog
+- **Mark Planner: Reassign Duplicate IDs** — gives copied files a new ID and renames them
+
+## Notes
+
+- New files go to the first workspace folder.
+- Mark Planner needs files on disk; virtual workspaces (e.g. a GitHub repository opened remotely) are not supported.
+- No telemetry and no network access.
+
+## Development
 
 ```sh
 npm install
-npm run build              # dist/ と media/ を生成
-npm test                   # 単体テスト
-npm run test:integration   # VS Code を起動して結合テスト（WSL では xvfb-run -a を付ける）
+npm run build              # dist/ and media/
+npm test                   # unit tests
+npm run test:integration   # integration tests in VS Code (prefix with xvfb-run -a on WSL/Linux without a display)
 ```
 
-F5 で拡張機能開発ホストを起動します。
+Press F5 to launch the Extension Development Host.
+
+## License
+
+[MIT](LICENSE). Bundled third-party software is listed in [ThirdPartyNotices.txt](ThirdPartyNotices.txt).

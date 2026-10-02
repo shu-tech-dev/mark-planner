@@ -38,6 +38,17 @@ export async function run(): Promise<void> {
   await waitFor(() => store.get(review.key)?.start === '2026-10-13', 'watcher picks up write');
   console.log('ok: patch writes frontmatter and watcher reindexes');
 
+  // Docs from other tools (id only, same id in two folders) are not planner items.
+  for (const dir of ['docs', 'docs/other']) {
+    await vscode.workspace.fs.writeFile(
+      vscode.Uri.joinPath(root, `${dir}/intro.md`),
+      new TextEncoder().encode('---\nid: intro\ntitle: Intro\n---\n'),
+    );
+  }
+  await new Promise((r) => setTimeout(r, 500));
+  assert.equal(store.getItems().some((i) => i.id === 'intro'), false);
+  console.log('ok: id-only docs are ignored');
+
   // Simulate the user duplicating the file.
   const copy = vscode.Uri.joinPath(root, 'planner/aaa111-review copy.md');
   await vscode.workspace.fs.copy(vscode.Uri.joinPath(root, 'planner/aaa111-review.md'), copy);

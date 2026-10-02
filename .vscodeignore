@@ -8,3 +8,7 @@ tsconfig.json
 **/*.map
 .vscode-test/
 sample/
+.gitignore
+dist/test/**
+images/**
+!images/icon.png

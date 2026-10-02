@@ -2,13 +2,50 @@
   "name": "mark-planner",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "preview": true,
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1a1b1e",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/shu-tech-dev/mark-planner.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shu-tech-dev/mark-planner/issues"
+  },
+  "homepage": "https://github.com/shu-tech-dev/mark-planner#readme",
   "engines": {
     "vscode": "^1.95.0"
   },
   "categories": [
+    "Visualization",
     "Other"
   ],
+  "keywords": [
+    "markdown",
+    "frontmatter",
+    "calendar",
+    "gantt",
+    "kanban",
+    "todo",
+    "task",
+    "planner",
+    "schedule",
+    "japanese holidays"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Mark Planner reads and writes Markdown files on disk and watches them for changes."
+    }
+  },
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -475,12 +512,15 @@
     "watch": "node build.mjs --watch",
     "typecheck": "tsc",
     "test": "node --import tsx --test test/*.test.ts",
-    "test:integration": "node build.mjs --integration && tsx test/integration/run.ts"
+    "test:integration": "node build.mjs --integration && tsx test/integration/run.ts",
+    "package": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/vscode": "^1.95.0",
     "@vscode/test-electron": "^3.1.0",
+    "@vscode/vsce": "^4.0.0",
     "esbuild": "^0.28.2",
     "tsx": "^4.23.15",
     "typescript": "^5.6.0"

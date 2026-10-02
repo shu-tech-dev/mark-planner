@@ -1,0 +1,12 @@
+# Changelog
+
+## 0.1.0 — first public preview
+
+- Calendar (month / week / day), Gantt chart, table, kanban board and to-do list views of Markdown files with dates in their frontmatter.
+- Editor dialog for creating and editing items; the body's checklist can be toggled there. Alt+click opens the file.
+- Drag to move and resize in the calendar and Gantt chart, drag cards between status columns, edit table cells inline.
+- Parent tasks and dependencies, priorities (P1–P3), repeating tasks, checklist progress and remaining workdays.
+- Weekends, Japanese public holidays and vacations (`type: holiday`).
+- Sidebar with open tasks by deadline and a badge for overdue + today.
+- Time-sortable IDs as file name prefixes, with detection of duplicated IDs after copying a file.
+- Settings screen; English and Japanese UI; light and dark themes.

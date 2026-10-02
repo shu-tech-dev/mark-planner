@@ -76,7 +76,8 @@ export function itemTooltip(item: PlannerItem, ctx: TooltipContext, options: Too
       range = date(start);
     }
     row(tr('tooltip.dates'), range + (options.span?.derived ? ` ${tr('tooltip.derived')}` : ''));
-    row(tr('tooltip.span'), tr('tooltip.workdays', countBusinessDays(start.slice(0, 10), end.slice(0, 10), cal)));
+    const workdays = countBusinessDays(start.slice(0, 10), end.slice(0, 10), cal);
+    row(tr('tooltip.span'), workdays === 1 ? tr('tooltip.workdays1') : tr('tooltip.workdays', workdays));
     const remaining = remainingBusinessDays(item, formatDate(new Date()), cal, settings);
     if (remaining) {
       row(tr('table.col.remaining'), el('span', `remaining ${remaining.kind}`, remainingLabel(remaining, lang)));

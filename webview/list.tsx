@@ -124,7 +124,7 @@ function TaskList({ items, settings, lang, state, onState }: ListProps) {
           <header class="tl-head">
             <h2>{tr(`list.${section.id}` as MessageKey)}</h2>
             {section.id === 'today' && (
-              <span class="tl-date">{formatDisplayDate(today, 'M月D日(ddd)', lang)}</span>
+              <span class="tl-date">{formatDisplayDate(today, lang === 'ja' ? 'M月D日(ddd)' : 'ddd, MMM D', lang)}</span>
             )}
             <span class="tl-count">{section.items.length || ''}</span>
           </header>

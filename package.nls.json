@@ -1,6 +1,6 @@
 {
   "displayName": "Mark Planner",
-  "description": "Plan events and tasks as Markdown files (frontmatter) and view them in a calendar and Gantt chart.",
+  "description": "Manage tasks and events as Markdown files with frontmatter, and plan them in a calendar, Gantt chart, table, kanban board and to-do list.",
   "command.openCalendar": "Open Calendar",
   "command.openGantt": "Open Gantt Chart",
   "command.openSettings": "Open Settings",

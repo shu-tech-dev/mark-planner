@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { businessCalendar, countBusinessDays, remainingBusinessDays, remainingSortKey } from '../src/businessDays';
+import { businessCalendar, countBusinessDays, remainingBusinessDays, remainingLabel, remainingSortKey } from '../src/businessDays';
 import { toPlannerItem } from '../src/model';
 import { DEFAULT_SETTINGS } from '../src/settings';
 
@@ -55,4 +55,11 @@ test('sort key orders overdue, today, then days left', () => {
     keys.map((k, i) => [k, i]).sort((a, b) => a[0] - b[0]).map(([, i]) => i),
     [3, 1, 2, 4, 0],
   );
+});
+
+test('remainingLabel uses singular for one workday', () => {
+  assert.equal(remainingLabel({ kind: 'left', days: 1 }, 'en'), '1 workday left');
+  assert.equal(remainingLabel({ kind: 'left', days: 3 }, 'en'), '3 workdays left');
+  assert.equal(remainingLabel({ kind: 'overdue', days: 1 }, 'en'), '1 workday overdue');
+  assert.equal(remainingLabel({ kind: 'left', days: 1 }, 'ja'), '残り1営業日');
 });

@@ -1,6 +1,6 @@
 {
   "displayName": "Mark Planner",
-  "description": "Markdownファイル（frontmatter）で管理する予定・タスクをカレンダーとガントチャートで表示します。",
+  "description": "予定・タスクを frontmatter 付きの Markdown ファイルで管理し、カレンダー・ガントチャート・テーブル・カンバン・リストで計画します。",
   "command.openCalendar": "カレンダーを開く",
   "command.openGantt": "ガントチャートを開く",
   "command.openSettings": "設定を開く",

@@ -11,9 +11,13 @@ test('normalizeDate', () => {
   assert.equal(normalizeDate('tomorrow'), undefined);
 });
 
-test('toPlannerItem requires a date or an id and falls back to file name', () => {
+test('toPlannerItem requires a date, or an id with a type/status, and falls back to file name', () => {
   assert.equal(toPlannerItem({ title: 'x' }, 'k', 'a.md'), undefined);
-  assert.equal(toPlannerItem({ id: 'p1', title: 'epic' }, 'k', 'a.md')?.start, undefined);
+  assert.equal(toPlannerItem({ id: 'p1', title: 'epic', type: 'task' }, 'k', 'a.md')?.id, 'p1');
+  assert.equal(toPlannerItem({ id: 'p1', status: 'doing' }, 'k', 'a.md')?.id, 'p1');
+  // Docusaurus-style pages: an id (and an unrelated type) but no dates.
+  assert.equal(toPlannerItem({ id: 'intro', title: 'Intro' }, 'k', 'a.md'), undefined);
+  assert.equal(toPlannerItem({ id: 'intro', type: 'guide' }, 'k', 'a.md'), undefined);
   const item = toPlannerItem({ end: '2026-10-06', depends: 'abc' }, 'k', 'dir/2026-10-06-foo.md');
   assert.equal(item?.title, '2026-10-06-foo');
   assert.equal(item?.type, 'task');

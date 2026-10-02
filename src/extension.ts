@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { fixDuplicateIds } from './commands';
 import { getLang } from './config';
+import { replaceIdPrefix } from './filename';
 import { t } from './i18n';
 import { PlannerPanel } from './panel';
 import { TaskTreeProvider } from './sidebar';
@@ -31,7 +32,11 @@ export function activate(context: vscode.ExtensionContext) {
 
   let warned = new Set<string>();
   store.onDidChange(async () => {
-    const ids = [...store.duplicateIds().keys()];
+    // Only planner-made files (`<id>-title.md`, copies included) prompt a fix;
+    // other tools may reuse IDs on purpose.
+    const ids = [...store.duplicateIds()]
+      .filter(([id, items]) => items.some((i) => replaceIdPrefix(i.path.split('/').pop()!, id, id)))
+      .map(([id]) => id);
     const fresh = ids.filter((id) => !warned.has(id));
     warned = new Set(ids);
     if (fresh.length === 0) {
