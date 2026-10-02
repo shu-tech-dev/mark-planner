@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { createQuickTask } from '../../src/commands';
 import { getConfig, updateSetting } from '../../src/config';
 import { cellPatch } from '../../src/table';
+import type { TaskTreeProvider } from '../../src/sidebar';
 import type { PlannerStore } from '../../src/store';
 
 async function waitFor(check: () => boolean, label: string) {
@@ -17,7 +18,7 @@ async function waitFor(check: () => boolean, label: string) {
 
 export async function run(): Promise<void> {
   const ext = vscode.extensions.all.find((e) => e.packageJSON.name === 'mark-planner')!;
-  const { store } = (await ext.activate()) as { store: PlannerStore };
+  const { store, sidebar } = (await ext.activate()) as { store: PlannerStore; sidebar: TaskTreeProvider };
   const root = vscode.workspace.workspaceFolders![0].uri;
   const read = async (rel: string) =>
     new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.Uri.joinPath(root, rel)));
@@ -117,6 +118,24 @@ export async function run(): Promise<void> {
   assert.equal(store.getItems().find((i) => i.title === '今日のタスク')?.start, '2026-10-14');
   await vscode.commands.executeCommand('markPlanner.openList');
   console.log('ok: list opens; add sets the due date');
+
+  // Sidebar: a task due today shows under "today"; completing it removes it.
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const todayIso = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  await createQuickTask(store, 'サイドバー確認', undefined, undefined, todayIso);
+  await waitFor(() => store.getItems().some((i) => i.title === 'サイドバー確認'), 'sidebar task indexed');
+  const todaySection = sidebar.sections().find((s) => s.id === 'today');
+  assert.ok(todaySection?.items.some((i) => i.title === 'サイドバー確認'));
+  const node = sidebar.getChildren(todaySection).find((n) => n.kind === 'task' && n.item.title === 'サイドバー確認')!;
+  const treeItem = sidebar.getTreeItem(node);
+  assert.equal(treeItem.label, 'サイドバー確認');
+  assert.equal(treeItem.contextValue, 'markPlanner.task');
+  await vscode.commands.executeCommand('markPlanner.completeTask', node);
+  await waitFor(() => store.getItems().find((i) => i.title === 'サイドバー確認')?.status === '完了', 'completed from sidebar');
+  assert.equal(sidebar.sections().some((s) => s.items.some((i) => i.title === 'サイドバー確認')), false);
+  await vscode.commands.executeCommand('workbench.view.extension.markPlanner');
+  console.log('ok: sidebar lists today, completes and hides the task');
 
   // Relative exclude globs apply to watcher events too.
   await vscode.workspace.getConfiguration('markPlanner').update('exclude', 'planner/skip/**', vscode.ConfigurationTarget.Workspace);

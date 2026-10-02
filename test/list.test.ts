@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildList, endOfWeek, toggleStatus } from '../src/list';
+import { buildList, dueLabel, endOfWeek, toggleStatus } from '../src/list';
 import type { PlannerItem } from '../src/model';
 import { DEFAULT_SETTINGS, DEFAULT_STATUSES } from '../src/settings';
 
@@ -64,4 +64,16 @@ test('toggleStatus uses the first done status and the first status', () => {
   assert.equal(toggleStatus(true, DEFAULT_STATUSES), 'done');
   assert.equal(toggleStatus(false, DEFAULT_STATUSES), 'todo');
   assert.equal(toggleStatus(true, DEFAULT_SETTINGS.statuses.filter((s) => !s.done)), undefined);
+});
+
+test('dueLabel reads like Todoist', () => {
+  const o = { weekStart: 0, dateFormat: 'auto', lang: 'ja' as const };
+  const due = (data: Partial<PlannerItem>) => dueLabel(item({ title: 'x', ...data }), today, o);
+  assert.deepEqual(due({ end: '2026-10-07' }), { kind: 'overdue', text: '10/7 (水)' });
+  assert.deepEqual(due({ start: '2026-10-14' }), { kind: 'today', text: '今日' });
+  assert.deepEqual(due({ end: '2026-10-14T17:00' }), { kind: 'today', text: '今日 17:00' });
+  assert.deepEqual(due({ end: '2026-10-15' }), { kind: 'tomorrow', text: '明日' });
+  assert.deepEqual(due({ end: '2026-10-17' }), { kind: 'week', text: '土曜日' });
+  assert.deepEqual(due({ end: '2026-10-19' }), { kind: 'later', text: '10/19 (月)' });
+  assert.equal(due({ id: 'u' }), undefined);
 });

@@ -3,6 +3,7 @@ import { createItem, fixDuplicateIds } from './commands';
 import { getLang } from './config';
 import { t } from './i18n';
 import { PlannerPanel } from './panel';
+import { TaskTreeProvider } from './sidebar';
 import { PlannerStore } from './store';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -17,6 +18,15 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('markPlanner.openSettings', () => PlannerPanel.show(context, store, 'settings')),
     vscode.commands.registerCommand('markPlanner.newItem', () => createItem(store)),
     vscode.commands.registerCommand('markPlanner.fixDuplicateIds', () => fixDuplicateIds(store)),
+  );
+
+  const sidebar = new TaskTreeProvider(store);
+  const treeView = vscode.window.createTreeView('markPlanner.tasks', { treeDataProvider: sidebar });
+  sidebar.attach(treeView);
+  context.subscriptions.push(
+    sidebar,
+    treeView,
+    vscode.commands.registerCommand('markPlanner.completeTask', (node) => sidebar.complete(node)),
   );
 
   let warned = new Set<string>();
@@ -39,7 +49,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   void store.reload();
   // Exposed for integration tests.
-  return { store };
+  return { store, sidebar };
 }
 
 export function deactivate() {}

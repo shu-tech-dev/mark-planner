@@ -45,5 +45,8 @@
   "config.dateFormat": "Display format of dates in Mark Planner screens (files keep `YYYY-MM-DD`). `auto` omits the current year. Tokens: `YYYY` `YY` `M` `MM` `MMM` `MMMM` `D` `DD` `ddd` `dddd`; wrap literal text in `[...]`. Times are appended as ` HH:mm`.",
   "command.openKanban": "Open Board",
   "command.openList": "Open List",
-  "config.tabOrder": "Order of the view tabs in the app bar: `calendar`, `gantt`, `table`, `kanban`, `list`. Missing tabs are added at the end."
+  "config.tabOrder": "Order of the view tabs in the app bar: `calendar`, `gantt`, `table`, `kanban`, `list`. Missing tabs are added at the end.",
+  "command.completeTask": "Complete Task",
+  "view.tasks": "Tasks",
+  "view.tasks.empty": "No open tasks.\n[New Task/Event](command:markPlanner.newItem)\n[Open List](command:markPlanner.openList)"
 }

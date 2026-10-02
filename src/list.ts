@@ -1,6 +1,8 @@
 import { deadlineOf } from './businessDays';
+import { formatDisplayDate } from './dateFormat';
+import { t } from './i18n';
 import type { PlannerItem } from './model';
-import { resolveStatus, type StatusDef } from './settings';
+import { resolveStatus, type Lang, type StatusDef } from './settings';
 
 export const LIST_SECTIONS = ['overdue', 'today', 'tomorrow', 'thisWeek', 'later', 'noDate', 'completed'] as const;
 export type ListSectionId = (typeof LIST_SECTIONS)[number];
@@ -74,4 +76,39 @@ export function buildList(
     list.sort(id === 'completed' ? (a, b) => byDeadline(b, a) : byDeadline);
   }
   return [...sections].map(([id, list]) => ({ id, items: list }));
+}
+
+export type DueKind = 'overdue' | 'today' | 'tomorrow' | 'week' | 'later';
+
+/**
+ * How a deadline reads in lists: "Today" / "Tomorrow" / weekday within this week /
+ * formatted date otherwise, plus ` HH:mm` for timed deadlines. Undefined if undated.
+ */
+export function dueLabel(
+  item: PlannerItem,
+  today: string,
+  options: { weekStart: number; dateFormat: string; lang: Lang },
+): { kind: DueKind; text: string } | undefined {
+  const deadline = deadlineOf(item);
+  if (!deadline) {
+    return undefined;
+  }
+  const raw = (item.end ?? item.start)!;
+  const time = raw.length > 10 ? ` ${raw.slice(11, 16)}` : '';
+  const tomorrow = addDays(today, 1);
+  const { lang } = options;
+  if (deadline < today) {
+    return { kind: 'overdue', text: formatDisplayDate(deadline, options.dateFormat, lang) + time };
+  }
+  if (deadline === today) {
+    return { kind: 'today', text: t(lang, 'list.today') + time };
+  }
+  if (deadline === tomorrow) {
+    return { kind: 'tomorrow', text: t(lang, 'list.tomorrow') + time };
+  }
+  if (deadline <= endOfWeek(today, options.weekStart)) {
+    const [y, m, d] = deadline.split('-').map(Number);
+    return { kind: 'week', text: new Intl.DateTimeFormat(lang, { weekday: 'long' }).format(new Date(y, m - 1, d)) + time };
+  }
+  return { kind: 'later', text: formatDisplayDate(deadline, options.dateFormat, lang) + time };
 }

@@ -1,10 +1,9 @@
 import { render } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { deadlineOf } from '../src/businessDays';
 import { formatDisplayDate } from '../src/dateFormat';
 import { ancestorTitles, parentMap } from '../src/hierarchy';
 import { MessageKey, t } from '../src/i18n';
-import { buildList, ListSectionId, toggleStatus } from '../src/list';
+import { buildList, dueLabel, ListSectionId, toggleStatus } from '../src/list';
 import type { PlannerItem } from '../src/model';
 import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { addDays, formatDate } from './dates';
@@ -130,7 +129,6 @@ function TaskList({ items, settings, lang, state, onState }: ListProps) {
               <Row
                 key={item.key}
                 item={item}
-                section={section.id}
                 ancestors={ancestorTitles(item, parents)}
                 {...{ settings, lang, items, today, canComplete }}
                 onToggle={(done) => toggle(item, done)}
@@ -155,7 +153,6 @@ function TaskList({ items, settings, lang, state, onState }: ListProps) {
 
 interface RowProps {
   item: PlannerItem;
-  section: ListSectionId;
   ancestors: string[];
   settings: PlannerSettings;
   lang: Lang;
@@ -165,7 +162,7 @@ interface RowProps {
   onToggle: (done: boolean) => void;
 }
 
-function Row({ item, section, ancestors, settings, lang, items, today, canComplete, onToggle }: RowProps) {
+function Row({ item, ancestors, settings, lang, items, today, canComplete, onToggle }: RowProps) {
   const status = resolveStatus(item.status, settings.statuses);
   const done = status.done;
   return (
@@ -210,58 +207,22 @@ function Row({ item, section, ancestors, settings, lang, items, today, canComple
             {tag}
           </span>
         ))}
-        <DueChip item={item} section={section} settings={settings} lang={lang} today={today} />
+        <DueChip item={item} settings={settings} lang={lang} today={today} />
       </div>
     </li>
   );
 }
 
-/** "Today" / "Tomorrow" / weekday this week / formatted date, colored by urgency. */
-function DueChip({
-  item,
-  section,
-  settings,
-  lang,
-  today,
-}: {
-  item: PlannerItem;
-  section: ListSectionId;
-  settings: PlannerSettings;
-  lang: Lang;
-  today: string;
-}) {
-  const deadline = deadlineOf(item);
-  if (!deadline) {
+/** Deadline chip colored by urgency (see dueLabel). */
+function DueChip({ item, settings, lang, today }: { item: PlannerItem; settings: PlannerSettings; lang: Lang; today: string }) {
+  const due = dueLabel(item, today, { weekStart: settings.weekStart, dateFormat: settings.dateFormat, lang });
+  if (!due) {
     return null;
   }
-  const raw = item.end ?? item.start!;
-  const time = raw.length > 10 ? ` ${raw.slice(11, 16)}` : '';
-  let label: string;
-  if (deadline === today) {
-    label = t(lang, 'list.today');
-  } else if (deadline === addDays(today, 1)) {
-    label = t(lang, 'list.tomorrow');
-  } else if (section === 'thisWeek') {
-    const [y, m, d] = deadline.split('-').map(Number);
-    label = new Intl.DateTimeFormat(lang, { weekday: 'long' }).format(new Date(y, m - 1, d));
-  } else {
-    label = formatDisplayDate(deadline, settings.dateFormat, lang);
-  }
-  const kind =
-    deadline < today
-      ? 'overdue'
-      : deadline === today
-        ? 'today'
-        : deadline === addDays(today, 1)
-          ? 'tomorrow'
-          : section === 'thisWeek'
-            ? 'week'
-            : 'later';
   return (
-    <span class={`due due-${kind}`}>
+    <span class={`due due-${due.kind}`}>
       <Icon name="calendar" />
-      {label}
-      {time}
+      {due.text}
     </span>
   );
 }

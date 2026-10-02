@@ -15,7 +15,8 @@
       {
         "command": "markPlanner.openCalendar",
         "title": "%command.openCalendar%",
-        "category": "Mark Planner"
+        "category": "Mark Planner",
+        "icon": "$(calendar)"
       },
       {
         "command": "markPlanner.openGantt",
@@ -35,7 +36,8 @@
       {
         "command": "markPlanner.openList",
         "title": "%command.openList%",
-        "category": "Mark Planner"
+        "category": "Mark Planner",
+        "icon": "$(list-unordered)"
       },
       {
         "command": "markPlanner.openSettings",
@@ -45,12 +47,19 @@
       {
         "command": "markPlanner.newItem",
         "title": "%command.newItem%",
-        "category": "Mark Planner"
+        "category": "Mark Planner",
+        "icon": "$(add)"
       },
       {
         "command": "markPlanner.fixDuplicateIds",
         "title": "%command.fixDuplicateIds%",
         "category": "Mark Planner"
+      },
+      {
+        "command": "markPlanner.completeTask",
+        "title": "%command.completeTask%",
+        "category": "Mark Planner",
+        "icon": "$(check)"
       }
     ],
     "configuration": {
@@ -392,6 +401,66 @@
           "order": 20
         }
       }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "markPlanner",
+          "title": "Mark Planner",
+          "icon": "resources/sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "markPlanner": [
+        {
+          "id": "markPlanner.tasks",
+          "name": "%view.tasks%"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "markPlanner.tasks",
+        "contents": "%view.tasks.empty%"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "markPlanner.newItem",
+          "when": "view == markPlanner.tasks",
+          "group": "navigation@1"
+        },
+        {
+          "command": "markPlanner.openList",
+          "when": "view == markPlanner.tasks",
+          "group": "navigation@2"
+        },
+        {
+          "command": "markPlanner.openCalendar",
+          "when": "view == markPlanner.tasks",
+          "group": "navigation@3"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "markPlanner.completeTask",
+          "when": "view == markPlanner.tasks && viewItem == markPlanner.task",
+          "group": "inline"
+        },
+        {
+          "command": "markPlanner.completeTask",
+          "when": "view == markPlanner.tasks && viewItem == markPlanner.task",
+          "group": "1_task"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "markPlanner.completeTask",
+          "when": "false"
+        }
+      ]
     }
   },
   "scripts": {
