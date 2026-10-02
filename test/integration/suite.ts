@@ -137,6 +137,17 @@ export async function run(): Promise<void> {
   await vscode.commands.executeCommand('workbench.view.extension.markPlanner');
   console.log('ok: sidebar lists today, completes and hides the task');
 
+  // Checklist progress comes from the body and follows edits.
+  const checkUri = vscode.Uri.joinPath(root, 'planner/check01-checks.md');
+  const writeChecks = (body: string) =>
+    vscode.workspace.fs.writeFile(checkUri, new TextEncoder().encode(`---\nid: check01\ntitle: checks\nstart: 2026-10-20\n---\n${body}`));
+  await writeChecks('- [x] a\n- [ ] b\n    - [ ] c\n```\n- [x] code\n```\n');
+  await waitFor(() => store.getItems().find((i) => i.title === 'checks')?.checklist?.total === 3, 'checklist indexed');
+  assert.deepEqual(store.getItems().find((i) => i.title === 'checks')?.checklist, { done: 1, total: 3 });
+  await writeChecks('- [x] a\n- [x] b\n    - [x] c\n');
+  await waitFor(() => store.getItems().find((i) => i.title === 'checks')?.checklist?.done === 3, 'checklist updated');
+  console.log('ok: checklist progress indexed and updated');
+
   // Relative exclude globs apply to watcher events too.
   await vscode.workspace.getConfiguration('markPlanner').update('exclude', 'planner/skip/**', vscode.ConfigurationTarget.Workspace);
   await waitFor(() => store.getItems().length > 0, 'reload after exclude change');

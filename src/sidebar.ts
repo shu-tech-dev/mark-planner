@@ -100,7 +100,8 @@ export class TaskTreeProvider implements vscode.TreeDataProvider<Node>, vscode.D
 
     const item = new vscode.TreeItem(task.title, vscode.TreeItemCollapsibleState.None);
     item.id = `task:${task.key}`;
-    item.description = [due?.text, ancestors[0]].filter(Boolean).join(' · ');
+    const checklist = task.checklist ? `☑ ${task.checklist.done}/${task.checklist.total}` : undefined;
+    item.description = [due?.text, checklist, ancestors[0]].filter(Boolean).join(' · ');
     item.iconPath = new vscode.ThemeIcon(
       'circle-large-outline',
       due && DUE_COLOR[due.kind] ? new vscode.ThemeColor(DUE_COLOR[due.kind]!) : undefined,

@@ -1,4 +1,5 @@
 import Gantt from 'frappe-gantt';
+import { itemProgress } from '../src/checklist';
 import { buildTree, TreeRow } from '../src/hierarchy';
 import { DayLabel, japaneseHolidaysBetween, vacationDays, weekendColor } from '../src/holidays';
 import { t } from '../src/i18n';
@@ -143,7 +144,7 @@ export class GanttView {
         name: row.depth > 0 ? `${'　'.repeat(row.depth - 1)}└ ${item.title}` : item.title,
         start: toGanttDate(row.start),
         end: toGanttDate(row.end),
-        progress: status.progress,
+        progress: itemProgress(item, settings.statuses),
         dependencies: item.depends.flatMap((id) => (indexById.has(id) ? [`t${indexById.get(id)}`] : [])).join(','),
         custom_class: barClass(item.type, status.index, row.hasChildren, row.derived, status.done && item.type === 'task'),
       };

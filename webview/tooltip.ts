@@ -5,6 +5,7 @@ import { MessageKey, t } from '../src/i18n';
 import type { PlannerItem } from '../src/model';
 import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { formatDate } from './dates';
+import { progressElement } from './progress';
 
 /** Everything the tooltip needs besides the item itself. */
 export interface TooltipContext {
@@ -74,6 +75,11 @@ export function itemTooltip(item: PlannerItem, ctx: TooltipContext, options: Too
       row(tr('table.col.remaining'), el('span', `remaining ${remaining.kind}`, remainingLabel(remaining, lang)));
     }
     card.append(rows);
+  }
+  const progress = progressElement(item);
+  if (progress) {
+    const rows = card.querySelector('.tt-rows') ?? card.appendChild(el('dl', 'tt-rows'));
+    rows.append(el('dt', '', tr('tooltip.checklist')), el('dd', '', progress));
   }
 
   if (item.tags.length) {

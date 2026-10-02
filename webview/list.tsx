@@ -8,6 +8,7 @@ import type { PlannerItem } from '../src/model';
 import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { addDays, formatDate } from './dates';
 import { icon } from './icons';
+import { Progress } from './kanban';
 import { itemTooltip, tooltip } from './tooltip';
 import { post } from './vscode';
 
@@ -202,6 +203,7 @@ function Row({ item, ancestors, settings, lang, items, today, canComplete, onTog
         {ancestors.length > 0 && <div class="tl-crumbs">{[...ancestors].reverse().join(' › ')}</div>}
       </div>
       <div class="tl-side">
+        <Progress item={item} />
         {item.tags.map((tag) => (
           <span class="tag" key={tag}>
             {tag}

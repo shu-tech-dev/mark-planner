@@ -16,6 +16,7 @@ import { formatDisplayDate } from '../src/dateFormat';
 import { formatDate as isoDate } from './dates';
 import { attachDatePicker, parseEditorText, toEditorText } from './datepicker';
 import { icon } from './icons';
+import { progressElement } from './progress';
 import { closePopover, menuList, openPopover } from './menu';
 import { post } from './vscode';
 
@@ -38,13 +39,14 @@ const DEFAULT_COLUMNS: ColumnState[] = [
   { id: 'start', visible: true, width: 150 },
   { id: 'end', visible: true, width: 150 },
   { id: 'remaining', visible: true, width: 140 },
+  { id: 'progress', visible: true, width: 130 },
   { id: 'tags', visible: true, width: 170 },
   { id: 'parent', visible: false, width: 170 },
   { id: 'depends', visible: false, width: 170 },
   { id: 'path', visible: false, width: 240 },
 ];
 const TYPES: ItemType[] = ['task', 'event', 'holiday'];
-const READ_ONLY: ColumnId[] = ['remaining', 'depends', 'path'];
+const READ_ONLY: ColumnId[] = ['remaining', 'progress', 'depends', 'path'];
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, ...children: (Node | string)[]) {
   const e = document.createElement(tag);
@@ -533,6 +535,11 @@ export class TableView {
       case 'remaining': {
         const r = this.remaining.get(item);
         td.append(r ? el('span', `remaining ${r.kind}`, remainingLabel(r, this.lang)) : el('span', 'muted', '—'));
+        break;
+      }
+      case 'progress': {
+        const progress = progressElement(item);
+        td.append(progress ?? el('span', 'muted', '—'));
         break;
       }
       case 'depends': {

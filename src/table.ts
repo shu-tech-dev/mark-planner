@@ -1,8 +1,9 @@
+import { itemProgress } from './checklist';
 import { parentMap } from './hierarchy';
 import { ItemType, normalizeDate, PlannerItem, PropertyMap } from './model';
 import { resolveStatus, StatusDef } from './settings';
 
-export const COLUMN_IDS = ['title', 'type', 'status', 'start', 'end', 'remaining', 'tags', 'parent', 'depends', 'path'] as const;
+export const COLUMN_IDS = ['title', 'type', 'status', 'start', 'end', 'remaining', 'progress', 'tags', 'parent', 'depends', 'path'] as const;
 export type ColumnId = (typeof COLUMN_IDS)[number];
 export type SortDir = 'asc' | 'desc';
 export type GroupBy = 'none' | 'status' | 'type';
@@ -95,6 +96,8 @@ export function comparator(
         return i.end;
       case 'remaining':
         return remainingOf(i);
+      case 'progress':
+        return i.type === 'task' ? itemProgress(i, statuses) : undefined;
       case 'tags':
         return i.tags.join(', ');
       case 'parent':

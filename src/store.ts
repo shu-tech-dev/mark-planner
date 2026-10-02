@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig } from './config';
+import { countChecklist } from './checklist';
 import { splitFrontmatter, updateFrontmatter } from './frontmatter';
 import { generateId } from './id';
 import { PlannerItem, toPlannerItem } from './model';
@@ -124,9 +125,13 @@ export class PlannerStore implements vscode.Disposable {
       this.items.delete(key);
       return;
     }
-    const { data } = splitFrontmatter(text);
+    const { data, bodyStart } = splitFrontmatter(text);
     const item = data && toPlannerItem(data, key, vscode.workspace.asRelativePath(uri), getConfig().properties);
     if (item) {
+      const checklist = countChecklist(text.slice(bodyStart));
+      if (checklist) {
+        item.checklist = checklist;
+      }
       this.items.set(key, item);
     } else {
       this.items.delete(key);

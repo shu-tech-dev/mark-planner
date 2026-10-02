@@ -9,6 +9,7 @@ import type { PlannerItem } from '../src/model';
 import { Lang, PlannerSettings, resolveStatus, StatusDef } from '../src/settings';
 import { formatDate } from './dates';
 import { icon } from './icons';
+import { checklistInfo } from './progress';
 import { itemTooltip, tooltip } from './tooltip';
 import { post } from './vscode';
 
@@ -233,6 +234,7 @@ function Card({ item, remaining, ancestors, settings, items, lang, dragging, onD
         <span class="kb-date">{range ?? t(lang, 'kanban.undated')}</span>
         {remaining && <span class={`remaining ${remaining.kind}`}>{remainingLabel(remaining, lang)}</span>}
       </div>
+      <Progress item={item} />
       {item.tags.length > 0 && (
         <div class="kb-tags">
           {item.tags.map((tag) => (
@@ -243,6 +245,22 @@ function Card({ item, remaining, ancestors, settings, items, lang, dragging, onD
         </div>
       )}
     </article>
+  );
+}
+
+/** Checklist progress (`2/4` + bar), shared with the list view. */
+export function Progress({ item }: { item: PlannerItem }) {
+  const info = checklistInfo(item);
+  if (!info) {
+    return null;
+  }
+  return (
+    <span class={`mp-progress${info.complete ? ' complete' : ''}`} title={`${info.percent}%`}>
+      <span class="mp-progress-bar">
+        <span style={{ width: `${info.percent}%` }} />
+      </span>
+      <span class="mp-progress-text">{info.text}</span>
+    </span>
   );
 }
 

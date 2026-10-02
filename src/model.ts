@@ -17,6 +17,8 @@ export interface PlannerItem {
   depends: string[];
   /** Workspace-relative path, for display. */
   path: string;
+  /** Task list items in the body (`- [ ]` / `- [x]`), when there are any. */
+  checklist?: { done: number; total: number };
 }
 
 export interface PropertyMap {
