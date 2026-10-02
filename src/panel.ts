@@ -7,9 +7,10 @@ import { DEFAULT_SETTINGS } from './settings';
 import { PlannerStore } from './store';
 import { cellPatch } from './table';
 
-export type PlannerView = 'calendar' | 'gantt' | 'table' | 'kanban' | 'settings';
+export type PlannerView = 'calendar' | 'gantt' | 'table' | 'kanban' | 'list' | 'settings';
 
 const TABLE_STATE_KEY = 'markPlanner.tableState';
+const LIST_STATE_KEY = 'markPlanner.listState';
 
 type WebviewMessage =
   | { type: 'ready' }
@@ -18,8 +19,9 @@ type WebviewMessage =
   | { type: 'create'; date: string }
   | { type: 'updateSetting'; key: string; value: unknown }
   | { type: 'patch'; key: string; field: string; value: unknown }
-  | { type: 'createQuick'; title: string; parent?: string; status?: string }
-  | { type: 'saveTableState'; state: unknown };
+  | { type: 'createQuick'; title: string; parent?: string; status?: string; start?: string }
+  | { type: 'saveTableState'; state: unknown }
+  | { type: 'saveListState'; state: unknown };
 
 export class PlannerPanel {
   private static current: PlannerPanel | undefined;
@@ -88,6 +90,10 @@ export class PlannerPanel {
           type: 'tableState',
           state: this.context.workspaceState.get(TABLE_STATE_KEY),
         });
+        void this.panel.webview.postMessage({
+          type: 'listState',
+          state: this.context.workspaceState.get(LIST_STATE_KEY),
+        });
         this.postConfig();
         this.setView(this.view);
         this.postItems();
@@ -127,10 +133,13 @@ export class PlannerPanel {
         break;
       }
       case 'createQuick':
-        await createQuickTask(this.store, message.title, message.parent, message.status);
+        await createQuickTask(this.store, message.title, message.parent, message.status, message.start);
         break;
       case 'saveTableState':
         await this.context.workspaceState.update(TABLE_STATE_KEY, message.state);
+        break;
+      case 'saveListState':
+        await this.context.workspaceState.update(LIST_STATE_KEY, message.state);
         break;
       case 'updateSetting':
         // Only keys declared by this extension can be written from the webview.
@@ -164,10 +173,11 @@ export class PlannerPanel {
   <div class="appbar-group">
     <div class="brand"><span class="brand-mark"></span><span class="brand-name">Mark Planner</span></div>
     <div class="segmented" role="tablist">
-      <button data-view="calendar" role="tab"><span data-icon="calendar"></span><span data-i18n="tab.calendar"></span></button>
-      <button data-view="gantt" role="tab"><span data-icon="gantt"></span><span data-i18n="tab.gantt"></span></button>
-      <button data-view="table" role="tab"><span data-icon="table"></span><span data-i18n="tab.table"></span></button>
-      <button data-view="kanban" role="tab"><span data-icon="kanban"></span><span data-i18n="tab.kanban"></span></button>
+      <button data-view="calendar" role="tab" data-i18n-title="tab.calendar"><span data-icon="calendar"></span><span data-i18n="tab.calendar"></span></button>
+      <button data-view="gantt" role="tab" data-i18n-title="tab.gantt"><span data-icon="gantt"></span><span data-i18n="tab.gantt"></span></button>
+      <button data-view="table" role="tab" data-i18n-title="tab.table"><span data-icon="table"></span><span data-i18n="tab.table"></span></button>
+      <button data-view="kanban" role="tab" data-i18n-title="tab.kanban"><span data-icon="kanban"></span><span data-i18n="tab.kanban"></span></button>
+      <button data-view="list" role="tab" data-i18n-title="tab.list"><span data-icon="list"></span><span data-i18n="tab.list"></span></button>
     </div>
   </div>
   <div class="appbar-group nav">
@@ -189,6 +199,7 @@ export class PlannerPanel {
   <div id="gantt" class="view"><div id="gantt-chart"></div><p id="gantt-empty" class="empty" data-i18n="gantt.empty"></p></div>
   <div id="table" class="view"></div>
   <div id="kanban" class="view"></div>
+  <div id="list" class="view"></div>
   <div id="settings" class="view"></div>
 </main>
 <script nonce="${nonce}" src="${media('webview.js')}"></script>

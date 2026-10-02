@@ -13,6 +13,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('markPlanner.openGantt', () => PlannerPanel.show(context, store, 'gantt')),
     vscode.commands.registerCommand('markPlanner.openTable', () => PlannerPanel.show(context, store, 'table')),
     vscode.commands.registerCommand('markPlanner.openKanban', () => PlannerPanel.show(context, store, 'kanban')),
+    vscode.commands.registerCommand('markPlanner.openList', () => PlannerPanel.show(context, store, 'list')),
     vscode.commands.registerCommand('markPlanner.openSettings', () => PlannerPanel.show(context, store, 'settings')),
     vscode.commands.registerCommand('markPlanner.newItem', () => createItem(store)),
     vscode.commands.registerCommand('markPlanner.fixDuplicateIds', () => fixDuplicateIds(store)),

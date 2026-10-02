@@ -6,6 +6,8 @@ const paths: Record<string, string> = {
   'chevron-right': '<path d="m9 18 6-6-6-6"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   kanban: '<rect x="3" y="4" width="5" height="16" rx="1.5"/><rect x="10" y="4" width="5" height="10" rx="1.5"/><rect x="17" y="4" width="4" height="13" rx="1.5"/>',
+  list: '<path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="18" r="1"/>',
+  check: '<path d="m5 12 5 5 9-10"/>',
   table: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 10v10"/>',
   search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
   filter: '<path d="M4 6h16M7 12h10M10 18h4"/>',

@@ -111,6 +111,13 @@ export async function run(): Promise<void> {
   await vscode.commands.executeCommand('markPlanner.openKanban');
   console.log('ok: kanban opens; column add sets status');
 
+  // List: "Add task" in Today/Tomorrow creates a task due that day.
+  await createQuickTask(store, '今日のタスク', undefined, undefined, '2026-10-14');
+  await waitFor(() => store.getItems().some((i) => i.title === '今日のタスク'), 'dated quick task indexed');
+  assert.equal(store.getItems().find((i) => i.title === '今日のタスク')?.start, '2026-10-14');
+  await vscode.commands.executeCommand('markPlanner.openList');
+  console.log('ok: list opens; add sets the due date');
+
   // Relative exclude globs apply to watcher events too.
   await vscode.workspace.getConfiguration('markPlanner').update('exclude', 'planner/skip/**', vscode.ConfigurationTarget.Workspace);
   await waitFor(() => store.getItems().length > 0, 'reload after exclude change');

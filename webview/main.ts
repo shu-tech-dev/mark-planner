@@ -6,17 +6,19 @@ import { CalendarNav, CalendarView } from './calendar';
 import { formatDate } from './dates';
 import { GanttView } from './gantt';
 import { KanbanView } from './kanban';
+import { ListView } from './list';
 import { renderIcons } from './icons';
 import { SettingsView } from './settings';
 import { TableView } from './table';
 import { post } from './vscode';
 
-type View = 'calendar' | 'gantt' | 'table' | 'kanban' | 'settings';
+type View = 'calendar' | 'gantt' | 'table' | 'kanban' | 'list' | 'settings';
 
 type ExtensionMessage =
   | { type: 'items'; items: PlannerItem[] }
   | { type: 'view'; view: View }
   | { type: 'tableState'; state: unknown }
+  | { type: 'listState'; state: unknown }
   | {
       type: 'config';
       settings: PlannerSettings;
@@ -45,6 +47,7 @@ const gantt = new GanttView($('gantt-chart'), $('gantt-empty'));
 const settings = new SettingsView($('settings'));
 const table = new TableView($('table'));
 const kanban = new KanbanView($('kanban'));
+const list = new ListView($('list'));
 
 function applyI18n() {
   document.documentElement.lang = state.lang;
@@ -120,6 +123,9 @@ function render() {
     case 'kanban':
       kanban.update(state.items, state.settings, state.lang);
       break;
+    case 'list':
+      list.update(state.items, state.settings, state.lang);
+      break;
     case 'settings':
       settings.update(state.settings, state.defaults, state.lang, state.target);
       break;
@@ -151,6 +157,9 @@ window.addEventListener('message', (e: MessageEvent<ExtensionMessage>) => {
       break;
     case 'tableState':
       table.setState(message.state);
+      break;
+    case 'listState':
+      list.setState(message.state);
       break;
     case 'config':
       state.settings = message.settings;

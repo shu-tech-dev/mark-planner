@@ -4,7 +4,7 @@ import { baseFileName, replaceIdPrefix, uniqueFileName } from './filename';
 import { createFrontmatterFile } from './frontmatter';
 import { generateId } from './id';
 import { t } from './i18n';
-import { ItemType } from './model';
+import { ItemType, normalizeDate } from './model';
 import { renderTemplate } from './settings';
 import { PlannerStore, writeFrontmatter } from './store';
 
@@ -104,6 +104,8 @@ export async function createQuickTask(
   title: string,
   parentId?: string,
   status?: string,
+  /** `YYYY-MM-DD`; makes it a single-day task due that day. */
+  start?: string,
 ): Promise<void> {
   const root = vscode.workspace.workspaceFolders?.[0];
   if (!root || !title.trim()) {
@@ -121,6 +123,7 @@ export async function createQuickTask(
     [p.type]: 'task',
     [p.status]: status && config.statuses.some((s) => s.name === status) ? status : config.statuses[0].name,
     ...(parentId ? { [p.parent]: parentId } : {}),
+    ...(start && normalizeDate(start) ? { [p.start]: normalizeDate(start) } : {}),
     [p.tags]: [],
   };
   for (const [key, value] of Object.entries(config['template.frontmatter'])) {
