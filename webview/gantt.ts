@@ -35,6 +35,24 @@ function statusStyles(settings: PlannerSettings): string {
 type DayMatcher = DayLabel | ((d: Date) => boolean);
 
 /**
+ * frappe-gantt scrolls with `behavior: 'smooth'` whenever it renders, which made the
+ * chart slide in from the left on first open. Run `fn` with scrolling forced instant.
+ */
+function withInstantScroll<T>(fn: () => T): T {
+  const original = Element.prototype.scrollTo;
+  Element.prototype.scrollTo = function (this: Element, ...args: unknown[]) {
+    const [first] = args;
+    const next = typeof first === 'object' && first ? [{ ...(first as ScrollToOptions), behavior: 'instant' }] : args;
+    return Reflect.apply(original, this, next);
+  } as typeof original;
+  try {
+    return fn();
+  } finally {
+    Element.prototype.scrollTo = original;
+  }
+}
+
+/**
  * frappe-gantt's `holidays` option maps a fill color to the days to shade:
  * `{date, name}` entries (name shown on hover) and/or a matcher function.
  */
@@ -149,10 +167,10 @@ export class GanttView {
     if (this.gantt) {
       // Shading and scale are read from options on every render.
       Object.assign(this.gantt.options, shading, { view_mode: this.mode });
-      this.gantt.refresh(this.tasks);
+      this.redraw();
       return;
     }
-    this.gantt = new Gantt(this.chart, this.tasks, {
+    this.gantt = withInstantScroll(() => new Gantt(this.chart, this.tasks, {
       ...shading,
       language: lang,
       view_mode: this.mode,
@@ -172,13 +190,52 @@ export class GanttView {
         const row = this.rowOf(task);
         if (row.derived) {
           // The span comes from the children; snap the bar back.
-          setTimeout(() => this.gantt?.refresh(this.tasks));
+          setTimeout(() => this.redraw());
           return;
         }
         const fmt = isDateOnly(row.start) ? formatDate : formatDateTime;
-        post({ type: 'move', key: row.item.key, start: fmt(start), end: fmt(end) });
+        this.queueMove(row.item.key, fmt(start), fmt(end));
       },
+    }));
+    this.stopBarAnimations();
+  }
+
+  /**
+   * frappe-gantt reports a date change for every snap step while a bar is dragged;
+   * keep only the latest per item and write once when the mouse is released.
+   */
+  private readonly pendingMoves = new Map<string, { start: string; end: string }>();
+
+  private queueMove(key: string, start: string, end: string): void {
+    if (this.pendingMoves.size === 0) {
+      window.addEventListener('mouseup', () => setTimeout(() => this.flushMoves()), { once: true });
+    }
+    this.pendingMoves.set(key, { start, end });
+  }
+
+  private flushMoves(): void {
+    for (const [key, { start, end }] of this.pendingMoves) {
+      post({ type: 'move', key, start, end });
+    }
+    this.pendingMoves.clear();
+  }
+
+  /** Re-renders with new tasks, keeping the scroll position (refresh() jumps to today). */
+  private redraw(): void {
+    if (!this.gantt) {
+      return;
+    }
+    const gantt = this.gantt;
+    withInstantScroll(() => {
+      gantt.setup_tasks(this.tasks);
+      gantt.change_view_mode(undefined, true);
     });
+    this.stopBarAnimations();
+  }
+
+  /** Bars grow from zero width via SVG <animate> on first render; show them as-is. */
+  private stopBarAnimations(): void {
+    this.chart.querySelectorAll('animate').forEach((a) => a.remove());
   }
 
   get viewMode(): GanttViewMode {
@@ -187,9 +244,11 @@ export class GanttView {
 
   setViewMode(mode: GanttViewMode): void {
     this.mode = mode;
-    this.gantt?.change_view_mode(mode);
+    withInstantScroll(() => this.gantt?.change_view_mode(mode));
+    this.stopBarAnimations();
   }
 
+  /** The "Today" button keeps frappe's smooth scroll. */
   today(): void {
     this.gantt?.scroll_current();
   }
