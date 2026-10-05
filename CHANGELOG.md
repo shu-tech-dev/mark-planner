@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
 - New files are named after their ID only (`tk2m9a.md`). Existing `<id>-<title>.md` files keep working, and a copied `<id>.md` is renamed to `<new id>.md` when its duplicate ID is fixed.
 - Calendar: hovering a day no longer replaces its weekend or holiday color.
