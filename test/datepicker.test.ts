@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { withHour, withMinutes } from '../webview/timepicker';
 import { addHour, joinDateTime, parseEditorText, parseTime, toEditorText } from '../webview/datepicker';
 
 test('parseEditorText accepts YYYY-MM-DD (and slashes, time) and rejects invalid dates', () => {
@@ -53,4 +54,13 @@ test('parseTime accepts loose 24-hour input', () => {
   assert.equal(parseTime('24:00'), undefined);
   assert.equal(parseTime('9:75'), undefined);
   assert.equal(parseTime('9am'), undefined);
+});
+
+test('time picker sets the hour and minutes separately', () => {
+  assert.equal(withHour('', 9), '09:00');
+  assert.equal(withHour('10:45', 14), '14:45');
+  assert.equal(withHour('930', 7), '07:30'); // loose input is understood
+  assert.equal(withMinutes('', '30'), '09:30');
+  assert.equal(withMinutes('14:00', '15'), '14:15');
+  assert.equal(withMinutes('bad', '45'), '09:45');
 });

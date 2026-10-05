@@ -1368,6 +1368,32 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev-holiday {
   color: var(--mp-accent-text);
   font-weight: 600;
 }
+.timepicker {
+  width: 232px;
+  min-width: 0;
+  padding: 10px;
+}
+.tp-title {
+  margin: 0 0 4px 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--mp-text-muted);
+}
+.tp-grid {
+  display: grid;
+  gap: 2px;
+}
+.tp-hours {
+  grid-template-columns: repeat(6, 1fr);
+}
+.tp-minutes {
+  grid-template-columns: repeat(4, 1fr);
+}
+.tp-grid + .tp-title {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--mp-border-subtle);
+}
 .dp-foot {
   display: flex;
   justify-content: space-between;
@@ -2068,7 +2094,7 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev-holiday {
   border-color: var(--mp-accent);
 }
 .ed-input.mono {
-  width: 140px;
+  width: 150px;
   font-variant-numeric: tabular-nums;
 }
 .ed-input.invalid {
@@ -2077,8 +2103,41 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev-holiday {
 select.ed-input {
   padding-right: 6px;
 }
+.ed-picker {
+  position: relative;
+  display: inline-flex;
+}
+.ed-picker .ed-input {
+  padding-right: 30px;
+}
+.ed-picker-btn {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--mp-text-faint);
+  cursor: pointer;
+}
+.ed-picker-btn:hover:not(:disabled) {
+  background: var(--mp-hover);
+  color: var(--mp-text);
+}
+.ed-picker-btn:disabled {
+  cursor: default;
+}
+.ed-picker-btn .icon-svg {
+  width: 14px;
+  height: 14px;
+}
 .ed-time {
-  width: 84px;
+  width: 96px;
   font-variant-numeric: tabular-nums;
 }
 .ed-time:disabled {

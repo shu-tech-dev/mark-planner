@@ -11,6 +11,7 @@ import { allTags, parentCandidates } from '../src/table';
 import { addHour, attachDatePicker, joinDateTime, parseTime, toEditorText } from './datepicker';
 import { icon } from './icons';
 import { closePopover, menuList, openPopover } from './menu';
+import { attachTimePicker } from './timepicker';
 import { tooltip } from './tooltip';
 import { post } from './vscode';
 
@@ -451,6 +452,7 @@ function Dialog({ target, items, settings, lang, body }: DialogProps) {
                     value={draft.startTime}
                     disabled={!hasDate(draft.startDate)}
                     label={tr('editor.startTime')}
+                    lang={lang}
                     onChange={(startTime) => update({ startTime })}
                   />
                 )
@@ -469,6 +471,7 @@ function Dialog({ target, items, settings, lang, body }: DialogProps) {
                     value={draft.endTime}
                     disabled={!hasDate(draft.endDate)}
                     label={tr(isTask ? 'editor.dueTime' : 'editor.endTime')}
+                    lang={lang}
                     onChange={(endTime) => update({ endTime })}
                   />
                 )
@@ -610,7 +613,106 @@ function Label({ icon: name, text }: { icon: string; text: string }) {
   );
 }
 
-/** `YYYY/MM/DD[ HH:mm]` input with the calendar popup while focused. */
+/**
+ * Text input with a popup picker while focused, plus an icon button that toggles it.
+ * `attach` opens the popup and reports picks (`done` closes it).
+ */
+function PickerInput({
+  value,
+  onChange,
+  attach,
+  icon: iconName,
+  iconLabel,
+  class: className,
+  placeholder,
+  disabled,
+  ariaLabel,
+  onBlurValue,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  attach: (input: HTMLInputElement, onPick: (done: boolean) => void) => () => void;
+  icon: string;
+  iconLabel: string;
+  class: string;
+  placeholder: string;
+  disabled?: boolean;
+  ariaLabel?: string;
+  /** Normalizes the typed value when leaving the field. */
+  onBlurValue?: (value: string) => string | undefined;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const cleanup = useRef<(() => void) | undefined>(undefined);
+  const closePicker = () => {
+    cleanup.current?.();
+    cleanup.current = undefined;
+  };
+  const openPicker = () => {
+    if (!cleanup.current && ref.current && !disabled) {
+      cleanup.current = attach(ref.current, (done) => {
+        onChange(ref.current!.value);
+        if (done) {
+          closePicker();
+        }
+      });
+    }
+  };
+  useEffect(() => closePicker, []);
+  return (
+    <span class={`ed-picker${disabled ? ' disabled' : ''}`}>
+      <input
+        ref={ref}
+        class={className}
+        aria-label={ariaLabel}
+        placeholder={placeholder}
+        spellcheck={false}
+        value={value}
+        disabled={disabled}
+        onInput={(e) => onChange(e.currentTarget.value)}
+        onFocus={openPicker}
+        onClick={openPicker}
+        onBlur={(e) => {
+          closePicker();
+          const normalized = onBlurValue?.(e.currentTarget.value);
+          if (normalized !== undefined && normalized !== value) {
+            onChange(normalized);
+          }
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' && cleanup.current) {
+            // Close just the picker, not the dialog.
+            e.stopPropagation();
+            closePicker();
+          } else if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+            closePicker();
+          }
+        }}
+      />
+      <button
+        type="button"
+        class="ed-picker-btn"
+        tabIndex={-1}
+        title={iconLabel}
+        aria-label={iconLabel}
+        disabled={disabled}
+        // Keep focus in the input so the popup stays usable.
+        onPointerDown={(e) => e.preventDefault()}
+        onClick={() => {
+          if (cleanup.current) {
+            closePicker();
+          } else {
+            ref.current?.focus();
+            openPicker();
+          }
+        }}
+      >
+        <Icon name={iconName} />
+      </button>
+    </span>
+  );
+}
+
+/** `YYYY/MM/DD` input with the calendar popup, an optional time field next to it. */
 function DateField({
   value,
   onChange,
@@ -627,42 +729,16 @@ function DateField({
   /** Time input shown next to the date. */
   time?: ComponentChildren;
 }) {
-  const ref = useRef<HTMLInputElement>(null);
-  const cleanup = useRef<(() => void) | undefined>(undefined);
-  const closePicker = () => {
-    cleanup.current?.();
-    cleanup.current = undefined;
-  };
-  const openPicker = () => {
-    if (!cleanup.current && ref.current) {
-      cleanup.current = attachDatePicker(ref.current, settings, lang, () => {
-        onChange(ref.current!.value);
-        closePicker();
-      });
-    }
-  };
-  useEffect(() => closePicker, []);
   return (
     <div class="ed-date">
-      <input
-        ref={ref}
+      <PickerInput
+        value={value}
+        onChange={onChange}
+        attach={(input, onPick) => attachDatePicker(input, settings, lang, () => onPick(true))}
+        icon="calendar"
+        iconLabel={t(lang, 'datepicker.open')}
         class={`ed-input mono${error ? ' invalid' : ''}`}
         placeholder="YYYY/MM/DD"
-        spellcheck={false}
-        value={value}
-        onInput={(e) => onChange(e.currentTarget.value)}
-        onFocus={openPicker}
-        onClick={openPicker}
-        onBlur={closePicker}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape' && cleanup.current) {
-            // Close just the picker, not the dialog.
-            e.stopPropagation();
-            closePicker();
-          } else if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
-            closePicker();
-          }
-        }}
       />
       {time}
       {error && <span class="ed-error">{error}</span>}
@@ -670,49 +746,37 @@ function DateField({
   );
 }
 
-/** Every half hour, offered as suggestions under the time inputs. */
-const TIME_SUGGESTIONS = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
-
 /**
- * 24-hour `HH:mm` text input (a native time input would follow the OS locale and
- * may show AM/PM). Loose input like `930` is normalized when leaving the field.
+ * 24-hour `HH:mm` input with the hour/minute popup (a native time input would
+ * follow the OS locale and may show AM/PM). Loose input like `930` is normalized
+ * when leaving the field.
  */
 function TimeField({
   value,
   disabled,
   label,
+  lang,
   onChange,
 }: {
   value: string;
   disabled: boolean;
   label: string;
+  lang: Lang;
   onChange: (value: string) => void;
 }) {
   return (
-    <>
-      <input
-        class={`ed-input ed-time${parseTime(value) === undefined ? ' invalid' : ''}`}
-        aria-label={label}
-        placeholder="HH:mm"
-        inputMode="numeric"
-        spellcheck={false}
-        list="ed-time-suggestions"
-        value={value}
-        disabled={disabled}
-        onInput={(e) => onChange(e.currentTarget.value)}
-        onBlur={(e) => {
-          const time = parseTime(e.currentTarget.value);
-          if (time !== undefined && time !== value) {
-            onChange(time);
-          }
-        }}
-      />
-      <datalist id="ed-time-suggestions">
-        {TIME_SUGGESTIONS.map((t) => (
-          <option key={t} value={t} />
-        ))}
-      </datalist>
-    </>
+    <PickerInput
+      value={value}
+      onChange={onChange}
+      attach={(input, onPick) => attachTimePicker(input, lang, onPick)}
+      icon="clock"
+      iconLabel={t(lang, 'timepicker.open')}
+      class={`ed-input ed-time${parseTime(value) === undefined ? ' invalid' : ''}`}
+      placeholder="HH:mm"
+      disabled={disabled}
+      ariaLabel={label}
+      onBlurValue={parseTime}
+    />
   );
 }
 

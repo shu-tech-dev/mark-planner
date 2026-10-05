@@ -185,17 +185,21 @@ export function attachDatePicker(
   };
 
   render();
-  input.addEventListener('input', () => {
+  const onInput = () => {
     const parsed = parseEditorText(input.value);
     if (parsed) {
       month = new Date(Number(parsed.slice(0, 4)), Number(parsed.slice(5, 7)) - 1, 1);
     }
     render();
-  });
+  };
+  input.addEventListener('input', onInput);
   document.body.append(pop);
   const rect = input.getBoundingClientRect();
   const below = rect.bottom + 4;
   pop.style.left = `${Math.max(8, Math.min(rect.left, window.innerWidth - pop.offsetWidth - 8))}px`;
   pop.style.top = `${below + pop.offsetHeight > window.innerHeight - 8 ? Math.max(8, rect.top - pop.offsetHeight - 4) : below}px`;
-  return () => pop.remove();
+  return () => {
+    input.removeEventListener('input', onInput);
+    pop.remove();
+  };
 }

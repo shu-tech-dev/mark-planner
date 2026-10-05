@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Editor dialog: separate time fields (24-hour, with half-hour suggestions) and an All day switch, instead of typing the time into the date.
+- Editor dialog: separate time fields (24-hour) with an hour/minute picker and an All day switch, instead of typing the time into the date. Date and time fields show a calendar / clock button that toggles their picker.
 - List and sidebar: a task with a start and a deadline shows under Today once it has started (and by its start day before that), instead of only by its deadline.
 
 ## 0.2.0
