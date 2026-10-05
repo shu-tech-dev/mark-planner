@@ -81,7 +81,7 @@ One column per status. Drag a card to change its status. Cards are ordered by ur
 
 ### List
 
-Todoist-style sections: Overdue / Today / Tomorrow / This week / Later / No date. Check the circle to complete a task (unchecking restores the first status). **Add task** under Today, Tomorrow or No date creates a task due then. Within a day, higher priority comes first.
+Todoist-style sections: Overdue / Today / Tomorrow / This week / Later / No date. A task with a span appears under Today once it has started (until its deadline passes, when it moves to Overdue), and under its start day before that; the date on the right is always the deadline. Check the circle to complete a task (unchecking restores the first status). **Add task** under Today, Tomorrow or No date creates a task due then. Within a day, higher priority comes first.
 
 ### Editor dialog
 

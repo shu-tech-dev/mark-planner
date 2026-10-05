@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- List and sidebar: a task with a start and a deadline shows under Today once it has started (and by its start day before that), instead of only by its deadline.
+
 ## 0.2.0
 
 - New files are named after their ID only (`tk2m9a.md`). Existing `<id>-<title>.md` files keep working, and a copied `<id>.md` is renamed to `<new id>.md` when its duplicate ID is fixed.

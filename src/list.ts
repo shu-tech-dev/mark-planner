@@ -31,9 +31,25 @@ export function toggleStatus(done: boolean, statuses: StatusDef[]): string | und
 }
 
 /**
- * Todoist-like sections by deadline (end, or start for single-day tasks): overdue,
- * today, tomorrow, the rest of this week, later, and undated. Completed tasks are
- * left out unless `showCompleted`, then listed last (most recent deadline first).
+ * The day a task is listed under: its deadline once that has passed (overdue),
+ * today once it has started, otherwise its start (or deadline when it has no start).
+ */
+export function listDateOf(item: PlannerItem, today: string): string | undefined {
+  const deadline = deadlineOf(item);
+  if (!deadline || deadline < today) {
+    return deadline;
+  }
+  const start = item.start?.slice(0, 10);
+  if (start && start <= today) {
+    return today;
+  }
+  return start ?? deadline;
+}
+
+/**
+ * Todoist-like sections by listDateOf: overdue, today (due or under way), tomorrow,
+ * the rest of this week, later, and undated. Completed tasks are left out unless
+ * `showCompleted`, then listed last (most recent deadline first).
  * `keepOpen` keys stay in their section even when done (just-checked animation).
  */
 export function buildList(
@@ -55,27 +71,33 @@ export function buildList(
       }
       continue;
     }
-    const deadline = deadlineOf(item);
-    const id: ListSectionId = !deadline
+    const date = listDateOf(item, today);
+    const id: ListSectionId = !date
       ? 'noDate'
-      : deadline < today
+      : date < today
         ? 'overdue'
-        : deadline === today
+        : date === today
           ? 'today'
-          : deadline === tomorrow
+          : date === tomorrow
             ? 'tomorrow'
-            : deadline <= weekEnd
+            : date <= weekEnd
               ? 'thisWeek'
               : 'later';
     sections.get(id)!.push(item);
   }
-  const byDeadline = (a: PlannerItem, b: PlannerItem) =>
-    (deadlineOf(a) ?? '').localeCompare(deadlineOf(b) ?? '') ||
+  // Open sections: listed day, priority, then the nearest deadline (time included).
+  const byListDate = (a: PlannerItem, b: PlannerItem) =>
+    (listDateOf(a, today) ?? '').localeCompare(listDateOf(b, today) ?? '') ||
     priorityRank(a.priority) - priorityRank(b.priority) ||
     (a.end ?? a.start ?? '').localeCompare(b.end ?? b.start ?? '') ||
     a.title.localeCompare(b.title);
+  // Completed: most recent deadline first.
+  const byDeadlineDesc = (a: PlannerItem, b: PlannerItem) =>
+    (deadlineOf(b) ?? '').localeCompare(deadlineOf(a) ?? '') ||
+    (b.end ?? b.start ?? '').localeCompare(a.end ?? a.start ?? '') ||
+    b.title.localeCompare(a.title);
   for (const [id, list] of sections) {
-    list.sort(id === 'completed' ? (a, b) => byDeadline(b, a) : byDeadline);
+    list.sort(id === 'completed' ? byDeadlineDesc : byListDate);
   }
   return [...sections].map(([id, list]) => ({ id, items: list }));
 }

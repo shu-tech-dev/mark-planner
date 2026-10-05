@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildList, dueLabel, endOfWeek, toggleStatus } from '../src/list';
+import { buildList, dueLabel, endOfWeek, listDateOf, toggleStatus } from '../src/list';
 import type { PlannerItem } from '../src/model';
 import { DEFAULT_SETTINGS, DEFAULT_STATUSES } from '../src/settings';
 
@@ -76,4 +76,43 @@ test('dueLabel reads like Todoist', () => {
   assert.deepEqual(due({ end: '2026-10-17' }), { kind: 'week', text: '土曜日' });
   assert.deepEqual(due({ end: '2026-10-19' }), { kind: 'later', text: '10/19 (月)' });
   assert.equal(due({ id: 'u' }), undefined);
+});
+
+test('listDateOf: overdue by deadline, today once started, else the start', () => {
+  const at = (data: Partial<PlannerItem>) => listDateOf(item({ title: 'x', ...data }), today);
+  assert.equal(at({ start: '2026-10-14', end: '2026-10-17' }), '2026-10-14'); // starts today
+  assert.equal(at({ start: '2026-10-10', end: '2026-10-16' }), '2026-10-14'); // under way
+  assert.equal(at({ start: '2026-10-16T09:00', end: '2026-10-25' }), '2026-10-16'); // not started
+  assert.equal(at({ start: '2026-10-01', end: '2026-10-13' }), '2026-10-13'); // overdue
+  assert.equal(at({ start: '2026-10-16' }), '2026-10-16'); // start only
+  assert.equal(at({ end: '2026-10-16' }), '2026-10-16'); // deadline only
+  assert.equal(at({ id: 'u' }), undefined);
+});
+
+test('spans are listed by their start until they are under way', () => {
+  const spans = [
+    item({ title: 'due-today', end: '2026-10-14' }),
+    item({ title: 'starts-today', start: '2026-10-14', end: '2026-10-17' }),
+    item({ title: 'under-way', start: '2026-10-10', end: '2026-10-16' }),
+    item({ title: 'starts-tomorrow', start: '2026-10-15', end: '2026-10-20' }),
+    item({ title: 'starts-friday', start: '2026-10-16', end: '2026-10-25' }),
+    item({ title: 'starts-next-week', start: '2026-10-19', end: '2026-10-30' }),
+    item({ title: 'ended', start: '2026-10-01', end: '2026-10-13' }),
+  ];
+  const sections = Object.fromEntries(
+    buildList(spans, today, { statuses: DEFAULT_STATUSES, weekStart: 0, showCompleted: false }).map((s) => [
+      s.id,
+      s.items.map((i) => i.title),
+    ]),
+  );
+  assert.deepEqual(sections, {
+    overdue: ['ended'],
+    // Same priority: nearest deadline first.
+    today: ['due-today', 'under-way', 'starts-today'],
+    tomorrow: ['starts-tomorrow'],
+    thisWeek: ['starts-friday'],
+    later: ['starts-next-week'],
+    noDate: [],
+    completed: [],
+  });
 });
