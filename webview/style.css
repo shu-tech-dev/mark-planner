@@ -2068,7 +2068,7 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev-holiday {
   border-color: var(--mp-accent);
 }
 .ed-input.mono {
-  width: 190px;
+  width: 140px;
   font-variant-numeric: tabular-nums;
 }
 .ed-input.invalid {
@@ -2076,6 +2076,16 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev-holiday {
 }
 select.ed-input {
   padding-right: 6px;
+}
+.ed-time {
+  width: 84px;
+  font-variant-numeric: tabular-nums;
+}
+.ed-time:disabled {
+  opacity: 0.45;
+}
+.ed-props .switch {
+  height: 30px;
 }
 .ed-date,
 .ed-repeat {

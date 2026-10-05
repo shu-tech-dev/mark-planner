@@ -39,6 +39,46 @@ export function parseEditorText(text: string): string | undefined {
 }
 
 /**
+ * Parses a typed 24-hour time: `9`, `930`, `9:30`, `21:05` (full-width digits too).
+ * Returns `HH:mm`, `''` for empty, or undefined when invalid.
+ */
+export function parseTime(text: string): string | undefined {
+  const ascii = text.trim().replace(/[０-９：]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
+  if (!ascii) {
+    return '';
+  }
+  const m = /^(\d{1,2})(?::?(\d{2}))?$/.exec(ascii);
+  if (!m || Number(m[1]) > 23 || Number(m[2] ?? 0) > 59) {
+    return undefined;
+  }
+  return `${m[1].padStart(2, '0')}:${m[2] ?? '00'}`;
+}
+
+/**
+ * Joins the dialog's date text and time text into a frontmatter value: `''` when
+ * there is no date, the date alone when `allDay` (or no time), and undefined when
+ * the date or time is invalid.
+ */
+export function joinDateTime(dateText: string, timeText: string, allDay: boolean): string | undefined {
+  const date = parseEditorText(dateText);
+  if (date === undefined || date === '') {
+    return date;
+  }
+  const day = date.slice(0, 10);
+  if (allDay) {
+    return day;
+  }
+  const time = parseTime(timeText);
+  return time === undefined ? undefined : time ? `${day}T${time}` : day;
+}
+
+/** `HH:mm` one hour later, kept within the day. */
+export function addHour(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  return h >= 23 ? '23:59' : `${String(h + 1).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/**
  * Calendar popup under a `YYYY/MM/DD` text input. Clicking a day writes it into
  * the input (keeping any time) and calls `onPick`. Focus stays in the input.
  */

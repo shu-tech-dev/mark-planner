@@ -1,4 +1,4 @@
-import { render } from 'preact';
+import { ComponentChildren, render } from 'preact';
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { BodyLine, bodyLines } from '../src/checklist';
 import { ancestorTitles, parentMap } from '../src/hierarchy';
@@ -8,7 +8,7 @@ import { PRIORITIES, PRIORITY_COLORS, Priority, priorityLabel } from '../src/pri
 import { parseRepeat, repeatLabel } from '../src/repeat';
 import { Lang, PlannerSettings, resolveStatus } from '../src/settings';
 import { allTags, parentCandidates } from '../src/table';
-import { attachDatePicker, parseEditorText, toEditorText } from './datepicker';
+import { addHour, attachDatePicker, joinDateTime, parseTime, toEditorText } from './datepicker';
 import { icon } from './icons';
 import { closePopover, menuList, openPopover } from './menu';
 import { tooltip } from './tooltip';
@@ -120,14 +120,30 @@ interface Draft {
   type: ItemType;
   status: string;
   priority?: Priority;
-  /** Editor text (`YYYY/MM/DD[ HH:mm]`). */
-  start: string;
-  end: string;
+  /** Date text (`YYYY/MM/DD`) and time (`HH:mm`, or `''` for none). */
+  startDate: string;
+  startTime: string;
+  endDate: string;
+  endTime: string;
+  /** Hides the times and saves dates only. */
+  allDay: boolean;
   tags: string[];
   parent?: string;
   /** `''` = no repeat, a preset value, or `custom` (then `repeatText`). */
   repeatMode: string;
   repeatText: string;
+}
+
+/** `2026-10-05T10:00` → date text and time for the dialog fields. */
+function splitDate(value: string | undefined) {
+  const text = toEditorText(value);
+  return { date: text.slice(0, 10), time: text.slice(11) };
+}
+
+function dateFields(start: string | undefined, end: string | undefined) {
+  const s = splitDate(start);
+  const e = splitDate(end);
+  return { startDate: s.date, startTime: s.time, endDate: e.date, endTime: e.time, allDay: !s.time && !e.time };
 }
 
 function initialDraft(target: Target, item: PlannerItem | undefined, settings: PlannerSettings): Draft {
@@ -138,8 +154,7 @@ function initialDraft(target: Target, item: PlannerItem | undefined, settings: P
       type: item.type,
       status: item.status,
       priority: item.priority,
-      start: toEditorText(item.start),
-      end: toEditorText(item.end),
+      ...dateFields(item.start, item.end),
       tags: item.tags,
       parent: item.parent,
       repeatMode: preset ?? (item.repeat ? 'custom' : ''),
@@ -151,8 +166,7 @@ function initialDraft(target: Target, item: PlannerItem | undefined, settings: P
     title: '',
     type: d.type ?? 'task',
     status: d.status ?? settings.statuses[0]?.name ?? 'todo',
-    start: toEditorText(d.start),
-    end: toEditorText(d.end),
+    ...dateFields(d.start, d.end),
     tags: [],
     repeatMode: '',
     repeatText: '',
@@ -171,20 +185,40 @@ function validate(draft: Draft): Problems {
   if (!draft.title.trim()) {
     p.title = 'editor.titleRequired';
   }
-  const start = parseEditorText(draft.start);
-  const end = parseEditorText(draft.end);
+  const start = joinDateTime(draft.startDate, draft.startTime, draft.allDay);
+  const end = joinDateTime(draft.endDate, draft.endTime, draft.allDay);
+  const badTime = (time: string) => !draft.allDay && parseTime(time) === undefined;
   if (start === undefined) {
-    p.start = 'editor.invalidDate';
+    p.start = badTime(draft.startTime) ? 'editor.invalidTime' : 'editor.invalidDate';
   }
   if (end === undefined) {
-    p.end = 'editor.invalidDate';
+    p.end = badTime(draft.endTime) ? 'editor.invalidTime' : 'editor.invalidDate';
   } else if (start && end && end.slice(0, 10) < start.slice(0, 10)) {
     p.end = 'editor.endBeforeStart';
+  } else if (start && end && start.length > 10 && end.length > 10 && end < start) {
+    p.end = 'editor.endBeforeStartTime';
   }
   if (draft.type === 'task' && draft.repeatMode === 'custom' && draft.repeatText.trim() && !parseRepeat(draft.repeatText)) {
     p.repeat = 'editor.repeat.invalid';
   }
   return p;
+}
+
+const hasDate = (text: string) => !!joinDateTime(text, '', true);
+
+/**
+ * With times shown, a date without a time gets a default: 09:00 for the start, and
+ * for the end one hour after the start on the same day, else 18:00.
+ */
+function fillTimes(d: Draft): Draft {
+  if (d.allDay) {
+    return d;
+  }
+  const startTime = d.startTime || (hasDate(d.startDate) ? '09:00' : '');
+  const sameDay = hasDate(d.startDate) && joinDateTime(d.startDate, '', true) === joinDateTime(d.endDate, '', true);
+  const start = parseTime(startTime);
+  const endTime = d.endTime || (hasDate(d.endDate) ? (sameDay && start ? addHour(start) : '18:00') : '');
+  return { ...d, startTime, endTime };
 }
 
 function repeatValue(draft: Draft): string | undefined {
@@ -215,6 +249,11 @@ function Dialog({ target, items, settings, lang, body }: DialogProps) {
     setDraft((d) => ({ ...d, ...patch }));
     setConfirmDiscard(false);
   };
+  /** Date/all-day changes also fill empty times with defaults (see fillTimes). */
+  const updateDates = (patch: Partial<Draft>) => {
+    setDraft((d) => fillTimes({ ...d, ...patch }));
+    setConfirmDiscard(false);
+  };
   const problems = validate(draft);
   const valid = Object.keys(problems).length === 0;
   const dirty = JSON.stringify(draft) !== JSON.stringify(initial) || checks.size > 0;
@@ -234,8 +273,8 @@ function Dialog({ target, items, settings, lang, body }: DialogProps) {
         type: draft.type,
         status: isTask ? draft.status : item?.status,
         priority: isTask ? draft.priority : item?.priority,
-        start: parseEditorText(draft.start) || undefined,
-        end: parseEditorText(draft.end) || undefined,
+        start: joinDateTime(draft.startDate, draft.startTime, draft.allDay) || undefined,
+        end: joinDateTime(draft.endDate, draft.endTime, draft.allDay) || undefined,
         tags: draft.tags,
         parent: draft.parent,
         repeat: isTask ? repeatValue(draft) : item?.repeat,
@@ -387,16 +426,54 @@ function Dialog({ target, items, settings, lang, body }: DialogProps) {
               </>
             )}
 
+            <Label icon="clock" text={tr('editor.allDay')} />
+            <div>
+              <label class="switch">
+                <input
+                  type="checkbox"
+                  checked={draft.allDay}
+                  onChange={(e) => updateDates({ allDay: e.currentTarget.checked })}
+                />
+                <span class="switch-track" />
+              </label>
+            </div>
+
             <Label icon="calendar" text={tr('editor.start')} />
             <DateField
-              value={draft.start}
-              onChange={(start) => update({ start })}
+              value={draft.startDate}
+              onChange={(startDate) => updateDates({ startDate })}
               error={show('start')}
               settings={settings}
               lang={lang}
+              time={
+                !draft.allDay && (
+                  <TimeField
+                    value={draft.startTime}
+                    disabled={!hasDate(draft.startDate)}
+                    label={tr('editor.startTime')}
+                    onChange={(startTime) => update({ startTime })}
+                  />
+                )
+              }
             />
             <Label icon="calendar" text={tr(isTask ? 'editor.due' : 'editor.end')} />
-            <DateField value={draft.end} onChange={(end) => update({ end })} error={show('end')} settings={settings} lang={lang} />
+            <DateField
+              value={draft.endDate}
+              onChange={(endDate) => updateDates({ endDate })}
+              error={show('end')}
+              settings={settings}
+              lang={lang}
+              time={
+                !draft.allDay && (
+                  <TimeField
+                    value={draft.endTime}
+                    disabled={!hasDate(draft.endDate)}
+                    label={tr(isTask ? 'editor.dueTime' : 'editor.endTime')}
+                    onChange={(endTime) => update({ endTime })}
+                  />
+                )
+              }
+            />
 
             {isTask && (
               <>
@@ -540,12 +617,15 @@ function DateField({
   error,
   settings,
   lang,
+  time,
 }: {
   value: string;
   onChange: (value: string) => void;
   error: string | false | undefined;
   settings: PlannerSettings;
   lang: Lang;
+  /** Time input shown next to the date. */
+  time?: ComponentChildren;
 }) {
   const ref = useRef<HTMLInputElement>(null);
   const cleanup = useRef<(() => void) | undefined>(undefined);
@@ -584,8 +664,55 @@ function DateField({
           }
         }}
       />
+      {time}
       {error && <span class="ed-error">{error}</span>}
     </div>
+  );
+}
+
+/** Every half hour, offered as suggestions under the time inputs. */
+const TIME_SUGGESTIONS = Array.from({ length: 48 }, (_, i) => `${String(Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`);
+
+/**
+ * 24-hour `HH:mm` text input (a native time input would follow the OS locale and
+ * may show AM/PM). Loose input like `930` is normalized when leaving the field.
+ */
+function TimeField({
+  value,
+  disabled,
+  label,
+  onChange,
+}: {
+  value: string;
+  disabled: boolean;
+  label: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <>
+      <input
+        class={`ed-input ed-time${parseTime(value) === undefined ? ' invalid' : ''}`}
+        aria-label={label}
+        placeholder="HH:mm"
+        inputMode="numeric"
+        spellcheck={false}
+        list="ed-time-suggestions"
+        value={value}
+        disabled={disabled}
+        onInput={(e) => onChange(e.currentTarget.value)}
+        onBlur={(e) => {
+          const time = parseTime(e.currentTarget.value);
+          if (time !== undefined && time !== value) {
+            onChange(time);
+          }
+        }}
+      />
+      <datalist id="ed-time-suggestions">
+        {TIME_SUGGESTIONS.map((t) => (
+          <option key={t} value={t} />
+        ))}
+      </datalist>
+    </>
   );
 }
 

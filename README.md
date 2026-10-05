@@ -87,7 +87,7 @@ Todoist-style sections: Overdue / Today / Tomorrow / This week / Later / No date
 
 Clicking an item in the calendar, board or list (double-click in the Gantt chart) opens the editor dialog; **Alt+click** opens the file instead. **+ New**, a calendar day click and the New Task/Event command use the same dialog.
 
-- Title, type, status, priority, start, due/end, repeat, tags and parent. Dates are `YYYY/MM/DD` (or `YYYY/MM/DD HH:mm`) with a date picker.
+- Title, type, status, priority, start, due/end, repeat, tags and parent. Dates are `YYYY/MM/DD` with a date picker. Turn **All day** off to add times (24-hour `HH:mm`; `930` or `9` work too, with half-hour suggestions); empty times are filled with 09:00 for the start and an hour later (or 18:00 on another day) for the end. Turning All day on saves dates only.
 - The body is shown read-only; task list checkboxes can be toggled right there.
 - Changes are saved together with **Save** (`Ctrl+Enter`, or `Enter` in the title). Only changed keys are written. Closing with unsaved changes asks for a second press.
 - **Open file** opens the Markdown beside the planner; **Delete** moves the file to the trash after confirmation.
