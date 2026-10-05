@@ -391,6 +391,37 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev:hover {
   border-width: 0 0 0 3px;
   box-shadow: 0 0 0 1px var(--mp-bg);
 }
+.fc .mp-ev-event {
+  /* Events: a filled pill without the task's accent line. */
+  padding: 1px 8px;
+  border-width: 0;
+  border-radius: 999px;
+}
+.fc .fc-timegrid-event.mp-ev-event {
+  border-width: 0;
+  border-radius: 8px;
+}
+.fc .mp-ev-holiday {
+  /* Vacations: stripes over the vacation color, no accent line. */
+  border-width: 0;
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1) 0 6px,
+    transparent 6px 12px
+  );
+}
+body[data-theme='light'] .fc .mp-ev-holiday,
+body.vscode-light:not([data-theme='dark']) .fc .mp-ev-holiday,
+body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev-holiday {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.55) 0 6px,
+    transparent 6px 12px
+  );
+}
+.fc .fc-timegrid-event.mp-ev-holiday {
+  border-width: 0;
+}
 .fc .mp-ev.is-done {
   opacity: 0.55;
 }
@@ -527,6 +558,10 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev:hover {
   background: var(--mp-accent);
   color: var(--mp-accent-text);
   border-radius: 6px;
+}
+.gantt .bar-wrapper[class*='_t-event_'] .bar {
+  rx: 12px;
+  ry: 12px;
 }
 .gantt .bar-label {
   font-size: 12px;

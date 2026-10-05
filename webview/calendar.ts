@@ -191,6 +191,8 @@ export class CalendarView {
           display: 'background',
           title: '',
           backgroundColor: translucent(settings.vacationColor, '17'),
+          // Plain day shading; the striped look is for the bar only.
+          classNames: ['mp-vacation-bg'],
         }),
       );
 
@@ -243,8 +245,10 @@ function toEvent(item: PlannerItem, settings: PlannerSettings): EventInput {
   const status = resolveStatus(item.status, settings.statuses);
   const color =
     item.type === 'event' ? settings.eventColor : item.type === 'holiday' ? settings.vacationColor : status.color;
-  const title = item.type === 'holiday' ? `🌴 ${item.title}` : deadlineOnly ? `⏰ ${item.title}` : item.title;
-  const classNames = ['mp-ev'];
+  // The shape tells the type apart (see .mp-ev in style.css): tasks are a soft chip
+  // with a left accent line, events a filled pill, vacations a striped bar.
+  const title = item.type === 'task' && deadlineOnly ? `⏰ ${item.title}` : item.title;
+  const classNames = ['mp-ev', `mp-ev-${item.type}`];
   if (status.done && item.type === 'task') {
     classNames.push('is-done');
   }
@@ -255,8 +259,7 @@ function toEvent(item: PlannerItem, settings: PlannerSettings): EventInput {
     end,
     allDay,
     durationEditable: !deadlineOnly,
-    // Soft fill + solid left accent line (see .mp-ev in style.css).
-    backgroundColor: soft(color),
+    backgroundColor: item.type === 'event' ? translucent(color, '66') : soft(color),
     borderColor: color,
     classNames,
   };

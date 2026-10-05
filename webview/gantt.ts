@@ -31,6 +31,8 @@ function statusStyles(settings: PlannerSettings): string {
 .gantt .bar-wrapper${selector} .bar-progress { fill: ${color}; fill-opacity: 0.6; }`;
   const rules = settings.statuses.map((s, i) => rule(`[class*="_s-${i}_"]`, s.color));
   rules.push(rule('[class*="_t-event_"]', settings.eventColor));
+  // Events are filled pills, so they read differently from task bars (see style.css).
+  rules.push(`.gantt .bar-wrapper[class*="_t-event_"] .bar { fill-opacity: 0.45; stroke: none; }`);
   return rules.join('\n');
 }
 

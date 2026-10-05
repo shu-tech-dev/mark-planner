@@ -4,6 +4,7 @@
 
 - New files are named after their ID only (`tk2m9a.md`). Existing `<id>-<title>.md` files keep working, and a copied `<id>.md` is renamed to `<new id>.md` when its duplicate ID is fixed.
 - Calendar: hovering a day no longer replaces its weekend or holiday color.
+- Calendar and Gantt: item types differ by shape, not only color — events are filled pills and vacations are striped bars (the 🌴 prefix is gone); tasks keep the left accent line.
 
 ## 0.1.0 — first public preview
 

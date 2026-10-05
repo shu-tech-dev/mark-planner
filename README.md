@@ -65,7 +65,7 @@ New files are named after their ID only, e.g. `tk2m9a.md`. You find items in the
 
 ### Calendar
 
-Month, week and day views. Drag to move, drag the edge to resize, click a day to create an item on that day. Hover for a tooltip with the parent path, status, dates, workdays and tags.
+Month, week and day views. The shape tells the type: tasks have a line on the left (in their status color), events are filled pills and vacations are striped. Drag to move, drag the edge to resize, click a day to create an item on that day. Hover for a tooltip with the parent path, status, dates, workdays and tags.
 
 ### Gantt chart
 
