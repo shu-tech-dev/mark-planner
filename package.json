@@ -1,6 +1,7 @@
 {
   "name": "mark-planner",
   "displayName": "%displayName%",
+  "publisher": "shu-tech",
   "description": "%description%",
   "version": "0.1.0",
   "preview": true,
