@@ -105,7 +105,7 @@ export async function run(): Promise<void> {
   const backlog = store.getItems().find((i) => i.title === 'バックログ項目')!;
   assert.equal(backlog.start, undefined);
   assert.equal(backlog.status, '未着手'); // first configured status (set above)
-  assert.match(backlog.path, new RegExp(`^planner/${backlog.id}-バックログ項目\\.md$`));
+  assert.equal(backlog.path, `planner/${backlog.id}.md`);
   console.log('ok: quick-created undated task');
 
   await store.patch(backlog.key, cellPatch('tags', 'a, b', getConfig().properties)!);
@@ -185,8 +185,19 @@ export async function run(): Promise<void> {
     [created.status, created.priority, created.start, created.end, created.tags, created.parent, created.repeat],
     ['完了', 2, '2026-10-20', '2026-10-22T18:00', ['x'], 'check01', 'monthly'],
   );
+  assert.equal(created.path, `planner/${created.id}.md`);
   await vscode.commands.executeCommand('markPlanner.newItem');
   console.log('ok: editor dialog writes body checks and creates items');
+
+  // A file manager copy of `<id>.md` gets a new ID and the plain `<newId>.md` name.
+  await vscode.workspace.fs.copy(vscode.Uri.joinPath(root, created.path), vscode.Uri.joinPath(root, `planner/${created.id} copy.md`));
+  await waitFor(() => store.duplicateIds().has(created.id!), 'copy duplicate detected');
+  await vscode.commands.executeCommand('markPlanner.fixDuplicateIds');
+  await waitFor(
+    () => store.duplicateIds().size === 0 && store.getItems().filter((i) => i.title === 'ダイアログ作成').every((i) => i.path === `planner/${i.id}.md`),
+    'copy renamed to <newId>.md',
+  );
+  console.log('ok: copied <id>.md renamed to <newId>.md');
 
   // Completing a repeating task creates the next one, which takes over `repeat`.
   const weeklyUri = vscode.Uri.joinPath(root, 'planner/week01-weekly.md');
@@ -206,7 +217,7 @@ export async function run(): Promise<void> {
   assert.equal(next.end, `${nextDue.getFullYear()}-${pad(nextDue.getMonth() + 1)}-${pad(nextDue.getDate())}`);
   assert.equal(next.status, '未着手');
   assert.equal(next.repeat, 'weekly');
-  assert.equal(next.path, `planner/${next.id}-weekly.md`);
+  assert.equal(next.path, `planner/${next.id}.md`);
   assert.deepEqual(next.checklist, { done: 0, total: 2 });
   assert.match(await read(next.path), /# due$/m);
   await waitFor(() => store.get(weekly.key)?.status === '完了', 'original completed');

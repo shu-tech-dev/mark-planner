@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getConfig, getLang } from './config';
-import { baseFileName, replaceIdPrefix, uniqueFileName } from './filename';
+import { replaceIdPrefix, uniqueFileName } from './filename';
 import { createFrontmatterFile } from './frontmatter';
 import { generateId } from './id';
 import { t } from './i18n';
@@ -12,7 +12,7 @@ import { fileExists as exists, PlannerStore, writeFrontmatter } from './store';
 const encoder = new TextEncoder();
 
 /**
- * Creates `<folder>/<id>-<title>.md` from the editor dialog's fields (or a quick
+ * Creates `<folder>/<id>.md` from the editor dialog's fields (or a quick
  * add). The body comes from the `template.body` setting. Returns the new file.
  */
 export async function createFromFields(store: PlannerStore, fields: EditorFields): Promise<vscode.Uri | undefined> {
@@ -26,7 +26,7 @@ export async function createFromFields(store: PlannerStore, fields: EditorFields
   await vscode.workspace.fs.createDirectory(folder);
   const id = generateId(store.takenIds());
   // The ID is unique, so the suffix is only a guard against hand-made files.
-  const fileName = await uniqueFileName(baseFileName(id, fields.title), (name) => exists(vscode.Uri.joinPath(folder, name)));
+  const fileName = await uniqueFileName(id, (name) => exists(vscode.Uri.joinPath(folder, name)));
   const uri = vscode.Uri.joinPath(folder, fileName);
   const data = newItemData(id, fields, config.properties, config.statuses, config['template.frontmatter']);
   const body = renderTemplate(config['template.body'], { title: fields.title, date: fields.start ?? fields.end ?? '' });
@@ -74,7 +74,7 @@ export async function deleteItem(store: PlannerStore, key: string): Promise<void
   }
 }
 
-/** Keeps `<id>-<title>.md` file names in sync after an ID change. */
+/** Keeps `<id>.md` (or older `<id>-title.md`) file names in sync after an ID change. */
 async function renameIdPrefix(uri: vscode.Uri, oldId: string, newId: string): Promise<void> {
   const name = uri.path.split('/').pop()!;
   const newName = replaceIdPrefix(name, oldId, newId);

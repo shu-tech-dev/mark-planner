@@ -27,6 +27,8 @@
   --mp-accent-soft: rgba(124, 131, 247, 0.16);
   --mp-input: #1c1d20;
   --mp-danger: #f87171;
+  /* Tint layered over a background (keeps weekend/holiday colors on hover). */
+  --mp-hover-overlay: rgba(255, 255, 255, 0.045);
   --mp-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--mp-border);
 }
 
@@ -47,6 +49,7 @@ body.vscode-high-contrast-light:not([data-theme='dark']) {
   --mp-accent-soft: rgba(91, 95, 232, 0.12);
   --mp-input: #ffffff;
   --mp-danger: #dc2626;
+  --mp-hover-overlay: rgba(15, 23, 42, 0.04);
   --mp-shadow: 0 10px 30px rgba(15, 23, 42, 0.12), 0 0 0 1px var(--mp-border);
 }
 
@@ -313,7 +316,8 @@ main {
   cursor: pointer;
 }
 .fc .fc-daygrid-day:hover {
-  background-color: var(--mp-surface);
+  /* An image layer paints over background-color, so the day's own color stays. */
+  background-image: linear-gradient(var(--mp-hover-overlay), var(--mp-hover-overlay));
 }
 .fc .fc-daygrid-day-top {
   flex-direction: row;

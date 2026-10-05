@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { getConfig, getLang } from './config';
 import { countChecklist } from './checklist';
 import { formatDisplayDate } from './dateFormat';
-import { baseFileName, uniqueFileName } from './filename';
+import { uniqueFileName } from './filename';
 import { splitFrontmatter, updateFrontmatter } from './frontmatter';
 import { t } from './i18n';
 import { generateId } from './id';
@@ -136,7 +136,7 @@ export class PlannerStore implements vscode.Disposable {
   }
 
   /**
-   * Copies a repeating task to `<new id>-<title>.md` next to it, with the next
+   * Copies a repeating task to `<new id>.md` next to it, with the next
    * dates, the first status and its checklist unchecked. False when the task
    * does not repeat (or has no dates to move).
    */
@@ -157,7 +157,7 @@ export class PlannerStore implements vscode.Disposable {
       ...(dates.end ? { [p.end]: dates.end } : {}),
     });
     const folder = vscode.Uri.joinPath(uri, '..');
-    const fileName = await uniqueFileName(baseFileName(id, item.title), (name) =>
+    const fileName = await uniqueFileName(id, (name) =>
       fileExists(vscode.Uri.joinPath(folder, name)),
     );
     await vscode.workspace.fs.writeFile(vscode.Uri.joinPath(folder, fileName), encoder.encode(newText));

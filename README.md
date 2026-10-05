@@ -25,7 +25,7 @@ One file = one task or event. Mark Planner shows Markdown files with dates in th
 ## Getting started
 
 1. Open a folder and run **Mark Planner: New Task/Event** (or click **+ New** in the planner panel).
-2. Fill in the dialog. The file is created as `planner/<id>-<title>.md`.
+2. Fill in the dialog. The file is created as `planner/<id>.md`.
 3. Open the views with **Mark Planner: Open Calendar** (Gantt / Table / Board / List) or the Mark Planner icon in the activity bar.
 
 Files you already have work too — anything matching the format below shows up.
@@ -54,12 +54,12 @@ A file is included when it has a `start` or `end`. Undated files are included wh
 
 ### IDs and file names
 
-New files are named `<id>-<title>.md`, e.g. `tk2m9a-Design review.md`.
+New files are named after their ID only, e.g. `tk2m9a.md`. You find items in the planner views, so the title stays in the frontmatter, where renaming it never touches the file name.
 
 - The ID is the creation time (seconds since 2020) in base 36, so sorting by file name sorts by creation.
-- The ID never changes, so moving dates never makes a file name stale. Type the ID in `Ctrl+P` to open the file.
-- The frontmatter `id` is what counts; renaming a file by hand does not break references.
-- If you copy a file, Mark Planner notices the duplicate ID and offers to give the copy a new one (and rename it).
+- The ID never changes, so moving dates or renaming a task never makes a file name stale. Type the ID in `Ctrl+P` to open the file.
+- The frontmatter `id` is what counts; renaming a file by hand does not break references. Files named `<id>-<title>.md` (older versions) keep working.
+- If you copy a file, Mark Planner notices the duplicate ID and offers to give the copy a new one and rename it to `<new id>.md`.
 
 ## Views
 

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { moveToPatch, normalizeDate, toPlannerItem } from '../src/model';
-import { baseFileName, replaceIdPrefix, sanitizeTitle, uniqueFileName } from '../src/filename';
+import { replaceIdPrefix, uniqueFileName } from '../src/filename';
 import { generateId } from '../src/id';
 
 test('normalizeDate', () => {
@@ -39,11 +39,12 @@ test('moveToPatch keeps item shape', () => {
 });
 
 test('file names', async () => {
-  assert.equal(sanitizeTitle('a/b: c?'), 'a-b- c-');
-  assert.equal(sanitizeTitle('  ...  '), 'untitled');
-  assert.equal(baseFileName('tk2m9a', '定例MTG'), 'tk2m9a-定例MTG');
   assert.equal(replaceIdPrefix('aaa111-review copy.md', 'aaa111', 'bbb222'), 'bbb222-review copy.md');
   assert.equal(replaceIdPrefix('aaa111.md', 'aaa111', 'bbb222'), 'bbb222.md');
+  // Copies of `<id>.md` made by VS Code, Windows Explorer and others.
+  assert.equal(replaceIdPrefix('aaa111 copy.md', 'aaa111', 'bbb222'), 'bbb222.md');
+  assert.equal(replaceIdPrefix('aaa111 - Copy.md', 'aaa111', 'bbb222'), 'bbb222.md');
+  assert.equal(replaceIdPrefix('aaa111 (2).md', 'aaa111', 'bbb222'), 'bbb222.md');
   assert.equal(replaceIdPrefix('aaa1111-x.md', 'aaa111', 'bbb222'), undefined);
   assert.equal(replaceIdPrefix('2026-10-06-x.md', 'aaa111', 'bbb222'), undefined);
   const taken = new Set(['x.md', 'x-2.md']);

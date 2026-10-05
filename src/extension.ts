@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   let warned = new Set<string>();
   store.onDidChange(async () => {
-    // Only planner-made files (`<id>-title.md`, copies included) prompt a fix;
+    // Only planner-named files (`<id>.md`, older `<id>-title.md`, copies included) prompt a fix;
     // other tools may reuse IDs on purpose.
     const ids = [...store.duplicateIds()]
       .filter(([id, items]) => items.some((i) => replaceIdPrefix(i.path.split('/').pop()!, id, id)))
