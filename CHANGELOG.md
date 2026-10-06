@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
 
 - **Show completed** switch in the top bar hides or shows completed tasks in every view (calendar, Gantt, table, board, list). It replaces the list's own switch and is the `hideDone` setting.
 - New setting `hideWeekends`: hide the days off (e.g. Saturday and Sunday) from the calendar.
