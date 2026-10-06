@@ -79,7 +79,9 @@ export function addHour(time: string): string {
 }
 
 /**
- * Calendar popup under a `YYYY/MM/DD` text input. Clicking a day writes it into
+ * Calendar popup under a `YYYY/MM/DD` text input. `anchor` (`YYYY-MM-DD`, e.g. the
+ * start date when picking the end) is marked and shown first while the input is
+ * empty; otherwise the popup opens on the input's month, or today's. Clicking a day writes it into
  * the input (keeping any time) and calls `onPick`. Focus stays in the input.
  */
 export function attachDatePicker(
@@ -87,13 +89,14 @@ export function attachDatePicker(
   settings: PlannerSettings,
   lang: Lang,
   onPick: () => void,
+  anchor?: string,
 ): () => void {
   const pop = document.createElement('div');
   pop.className = 'popover datepicker';
   // Keep focus (and thus the editor) in the input while using the picker.
   pop.addEventListener('pointerdown', (e) => e.preventDefault());
 
-  const initial = parseEditorText(input.value) || formatDate(new Date());
+  const initial = parseEditorText(input.value) || anchor || formatDate(new Date());
   let month = new Date(Number(initial.slice(0, 4)), Number(initial.slice(5, 7)) - 1, 1);
 
   const pick = (date: string) => {
@@ -149,6 +152,9 @@ export function attachDatePicker(
       }
       if (iso === today) {
         b.classList.add('today');
+      }
+      if (iso === anchor) {
+        b.classList.add('anchor');
       }
       if (iso === selected) {
         b.classList.add('selected');

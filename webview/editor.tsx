@@ -462,6 +462,7 @@ function Dialog({ target, items, settings, lang, body }: DialogProps) {
             <DateField
               value={draft.endDate}
               onChange={(endDate) => updateDates({ endDate })}
+              anchor={joinDateTime(draft.startDate, '', true) || undefined}
               error={show('end')}
               settings={settings}
               lang={lang}
@@ -720,6 +721,7 @@ function DateField({
   settings,
   lang,
   time,
+  anchor,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -728,13 +730,15 @@ function DateField({
   lang: Lang;
   /** Time input shown next to the date. */
   time?: ComponentChildren;
+  /** `YYYY-MM-DD` the picker opens on (and marks) while empty, e.g. the start date. */
+  anchor?: string;
 }) {
   return (
     <div class="ed-date">
       <PickerInput
         value={value}
         onChange={onChange}
-        attach={(input, onPick) => attachDatePicker(input, settings, lang, () => onPick(true))}
+        attach={(input, onPick) => attachDatePicker(input, settings, lang, () => onPick(true), anchor)}
         icon="calendar"
         iconLabel={t(lang, 'datepicker.open')}
         class={`ed-input mono${error ? ' invalid' : ''}`}

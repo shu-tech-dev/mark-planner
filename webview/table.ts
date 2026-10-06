@@ -681,7 +681,9 @@ export class TableView {
     input.spellcheck = false;
     this.openEditor(td, input, (v) => this.patch(item, field, parseEditorText(v)), {
       validate: (v) => parseEditorText(v) !== undefined,
-      setup: (finish) => attachDatePicker(input, this.settings, this.lang, finish),
+      // Picking an end opens on (and marks) the start date while the end is empty.
+      setup: (finish) =>
+        attachDatePicker(input, this.settings, this.lang, finish, field === 'end' ? item.start?.slice(0, 10) : undefined),
     });
   }
 }

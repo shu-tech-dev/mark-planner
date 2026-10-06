@@ -5,6 +5,7 @@
 - **Show completed** switch in the top bar hides or shows completed tasks in every view (calendar, Gantt, table, board, list). It replaces the list's own switch and is the `hideDone` setting.
 - New setting `hideWeekends`: hide the days off (e.g. Saturday and Sunday) from the calendar.
 - Gantt: parents are summary bars with hooks at both ends instead of `└` before the children's names.
+- Picking an end date (dialog or table) opens the calendar on the start date and marks it, while the end is still empty.
 - Scrollbars and native controls follow the planner's light/dark theme instead of VS Code's.
 
 ## 0.3.0
