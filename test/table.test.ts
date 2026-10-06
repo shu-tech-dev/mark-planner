@@ -94,3 +94,22 @@ test('remaining column sorts by the provided key, empties last', () => {
   const children = rows.filter((r) => r.depth === 1).map((r) => r.item.title);
   assert.deepEqual(children, ['a-child', 'b-child']);
 });
+
+test('hideDone leaves out completed tasks but keeps a done parent of open work', () => {
+  const rows = (hideDone: boolean) =>
+    buildTable(
+      [
+        item({ title: 'epic', id: 'e', status: 'done' }),
+        item({ title: 'open-child', parent: 'e' }),
+        item({ title: 'done-child', parent: 'e', status: 'done' }),
+        item({ title: 'done-alone', status: 'done' }),
+        item({ title: 'meeting', type: 'event', status: 'done' }),
+      ],
+      DEFAULT_QUERY,
+      DEFAULT_STATUSES,
+      undefined,
+      hideDone,
+    )[0].rows.map((r) => `${'  '.repeat(r.depth)}${r.item.title}`);
+  assert.deepEqual(rows(true), ['epic', '  open-child', 'meeting']);
+  assert.equal(rows(false).length, 5);
+});

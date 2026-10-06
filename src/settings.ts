@@ -48,6 +48,8 @@ export interface PlannerSettings {
   weekendColors: Record<string, string>;
   /** Show Japanese public holidays. */
   showHolidays: boolean;
+  /** Hide the weekdays in `weekendColors` from the calendar. */
+  hideWeekends: boolean;
   holidayColor: string;
   vacationColor: string;
   'template.body': string;
@@ -80,6 +82,7 @@ export const DEFAULT_SETTINGS: PlannerSettings = {
   tabOrder: [...TAB_VIEWS],
   weekendColors: { '0': '#f14c4c', '6': '#3794ff' },
   showHolidays: true,
+  hideWeekends: false,
   holidayColor: '#f14c4c',
   vacationColor: '#2ea043',
   'template.body': '',
@@ -162,6 +165,7 @@ export function normalizeSettings(raw: Partial<Record<SettingKey, unknown>>): Pl
         )
       : d.weekendColors,
     showHolidays: raw.showHolidays !== false,
+    hideWeekends: raw.hideWeekends === true,
     holidayColor: color(raw.holidayColor, d.holidayColor),
     vacationColor: color(raw.vacationColor, d.vacationColor),
     'template.body': typeof raw['template.body'] === 'string' ? raw['template.body'] : d['template.body'],

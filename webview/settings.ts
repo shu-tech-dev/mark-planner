@@ -119,6 +119,7 @@ export class SettingsView {
           'settings.section.holidays',
           h('p', { class: 'help' }, this.tr('settings.holidays.help')),
           this.weekendColorsField('weekendColors', 'settings.weekendColors', defaults),
+          this.checkboxField('hideWeekends', 'settings.hideWeekends'),
           this.checkboxField('showHolidays', 'settings.showHolidays'),
           this.colorField('holidayColor', 'settings.holidayColor'),
           this.colorField('vacationColor', 'settings.vacationColor'),

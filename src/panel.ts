@@ -12,7 +12,6 @@ import { cellPatch } from './table';
 export type PlannerView = 'calendar' | 'gantt' | 'table' | 'kanban' | 'list' | 'settings';
 
 const TABLE_STATE_KEY = 'markPlanner.tableState';
-const LIST_STATE_KEY = 'markPlanner.listState';
 
 type WebviewMessage =
   | { type: 'ready' }
@@ -24,8 +23,7 @@ type WebviewMessage =
   | { type: 'updateSetting'; key: string; value: unknown }
   | { type: 'patch'; key: string; field: string; value: unknown }
   | { type: 'createQuick'; title: string; parent?: string; status?: string; start?: string }
-  | { type: 'saveTableState'; state: unknown }
-  | { type: 'saveListState'; state: unknown };
+  | { type: 'saveTableState'; state: unknown };
 
 export class PlannerPanel {
   private static current: PlannerPanel | undefined;
@@ -116,10 +114,6 @@ export class PlannerPanel {
           type: 'tableState',
           state: this.context.workspaceState.get(TABLE_STATE_KEY),
         });
-        void this.panel.webview.postMessage({
-          type: 'listState',
-          state: this.context.workspaceState.get(LIST_STATE_KEY),
-        });
         this.postConfig();
         this.setView(this.view);
         this.postItems();
@@ -178,9 +172,6 @@ export class PlannerPanel {
         break;
       case 'saveTableState':
         await this.context.workspaceState.update(TABLE_STATE_KEY, message.state);
-        break;
-      case 'saveListState':
-        await this.context.workspaceState.update(LIST_STATE_KEY, message.state);
         break;
       case 'updateSetting':
         // Only keys declared by this extension can be written from the webview.
@@ -258,6 +249,7 @@ export class PlannerPanel {
   </div>
   <div class="appbar-group end">
     <div class="segmented compact" id="range"></div>
+    <label class="switch" id="show-done-switch"><input type="checkbox" id="show-done"><span class="switch-track"></span><span data-i18n="appbar.showDone"></span></label>
     <button class="btn primary" id="new-item"><span data-icon="plus"></span><span data-i18n="button.new"></span></button>
     <button class="btn icon ghost" data-view="settings" data-icon="settings" data-i18n-title="tab.settings"></button>
   </div>

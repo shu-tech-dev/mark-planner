@@ -293,8 +293,12 @@ export class TableView {
     this.remaining = new Map(
       this.items.map((i) => [i, remainingBusinessDays(i, today, cal, this.settings)] as const),
     );
-    const groups = buildTable(this.items, this.state.query, this.settings.statuses, (i) =>
-      remainingSortKey(this.remaining.get(i)),
+    const groups = buildTable(
+      this.items,
+      this.state.query,
+      this.settings.statuses,
+      (i) => remainingSortKey(this.remaining.get(i)),
+      this.settings.hideDone,
     );
     const total = groups.reduce((n, g) => n + g.rows.length, 0);
     const count = document.getElementById('tbl-count');

@@ -125,7 +125,11 @@ export function buildTable(
   statuses: StatusDef[],
   /** Sort key for the "remaining" column (see remainingSortKey). */
   remainingOf?: (item: PlannerItem) => number | undefined,
+  /** Leave out completed tasks (their open descendants keep them as context). */
+  hideDone = false,
 ): TableGroup[] {
+  const isMatch = (i: PlannerItem) =>
+    matches(i, query) && !(hideDone && i.type === 'task' && resolveStatus(i.status, statuses).done);
   const byId = new Map(items.flatMap((i) => (i.id ? [[i.id, i] as const] : [])));
   const titleOf = (id: string | undefined) => (id ? (byId.get(id)?.title ?? id) : '');
   const compare = comparator(query, statuses, titleOf, remainingOf);
@@ -137,7 +141,7 @@ export function buildTable(
     for (const key of order) {
       groups.set(key, []);
     }
-    for (const item of items.filter((i) => matches(i, query))) {
+    for (const item of items.filter(isMatch)) {
       const key =
         query.group === 'type' ? item.type : item.type === 'task' ? resolveStatus(item.status, statuses).name : '';
       groups.get(key)?.push(item);
@@ -158,7 +162,7 @@ export function buildTable(
   // Visible = matches, or has a visible descendant.
   const visible = new Set<PlannerItem>();
   for (const item of items) {
-    if (matches(item, query)) {
+    if (isMatch(item)) {
       const seen = new Set<PlannerItem>();
       for (let i: PlannerItem | undefined = item; i && !seen.has(i); i = parents.get(i)) {
         seen.add(i);

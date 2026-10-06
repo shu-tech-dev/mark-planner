@@ -142,6 +142,9 @@ export class CalendarView {
     this.byKey = new Map(items.map((i) => [i.key, i]));
     this.calendar.setOption('locale', lang === 'ja' ? jaLocale : 'en');
     this.calendar.setOption('firstDay', settings.weekStart);
+    // Days off by weekday; never all seven (FullCalendar needs at least one day).
+    const daysOff = Object.keys(settings.weekendColors).map(Number);
+    this.calendar.setOption('hiddenDays', settings.hideWeekends && daysOff.length < 7 ? daysOff : []);
     // 0: day cells grow to fit every event; n: show n, then "+N more".
     this.calendar.setOption('dayMaxEvents', settings.maxEventsPerDay || false);
     document.documentElement.style.setProperty('--mp-holiday-color', settings.holidayColor);

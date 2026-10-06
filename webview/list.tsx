@@ -15,17 +15,10 @@ import { editItem, openItem } from './editor';
 import { itemTooltip, tooltip } from './tooltip';
 import { post } from './vscode';
 
-/** Persisted per workspace by the extension (see panel.ts). */
-export interface ListState {
-  showCompleted: boolean;
-}
-
 interface ListProps {
   items: PlannerItem[];
   settings: PlannerSettings;
   lang: Lang;
-  state: ListState;
-  onState: (state: ListState) => void;
 }
 
 /** How long a just-checked task stays (struck through) before leaving its section. */
@@ -42,7 +35,9 @@ function Icon({ name }: { name: string }) {
   return <span class="ico" dangerouslySetInnerHTML={{ __html: icon(name) }} />;
 }
 
-function TaskList({ items, settings, lang, state, onState }: ListProps) {
+function TaskList({ items, settings, lang }: ListProps) {
+  // Shared with the other views: the app bar's "Show completed" (the hideDone setting).
+  const showCompleted = !settings.hideDone;
   const tr = (key: MessageKey, ...args: (string | number)[]) => t(lang, key, ...args);
   const today = formatDate(new Date());
   // Optimistic status changes until the write comes back as an items update.
@@ -71,10 +66,10 @@ function TaskList({ items, settings, lang, state, onState }: ListProps) {
       buildList(shown, today, {
         statuses: settings.statuses,
         weekStart: settings.weekStart,
-        showCompleted: state.showCompleted,
+        showCompleted,
         keepOpen: lingering,
       }),
-    [shown, today, settings, state.showCompleted, lingering],
+    [shown, today, settings, showCompleted, lingering],
   );
   const parents = useMemo(() => parentMap(shown), [shown]);
   const canComplete = settings.statuses.some((s) => s.done);
@@ -88,7 +83,7 @@ function TaskList({ items, settings, lang, state, onState }: ListProps) {
     setPending((p) => ({ ...p, [item.key]: status }));
     post({ type: 'patch', key: item.key, field: 'status', value: status });
     clearTimeout(timers.current.get(item.key));
-    if (done && !state.showCompleted) {
+    if (done && !showCompleted) {
       setLingering((s) => new Set(s).add(item.key));
       timers.current.set(
         item.key,
@@ -108,17 +103,6 @@ function TaskList({ items, settings, lang, state, onState }: ListProps) {
 
   return (
     <div class="tlist">
-      <div class="tl-toolbar">
-        <label class="switch">
-          <input
-            type="checkbox"
-            checked={state.showCompleted}
-            onChange={(e) => onState({ ...state, showCompleted: (e.currentTarget as HTMLInputElement).checked })}
-          />
-          <span class="switch-track" />
-          {tr('list.showCompleted')}
-        </label>
-      </div>
       {visible.map((section) => (
         <section class={`tl-section tl-${section.id}`} key={section.id}>
           <header class="tl-head">
@@ -271,37 +255,9 @@ function AddTask({ tr, start }: { tr: (key: MessageKey) => string; start: string
 }
 
 export class ListView {
-  private state: ListState = { showCompleted: false };
-  private last: Omit<ListProps, 'state' | 'onState'> | undefined;
-
   constructor(private readonly root: HTMLElement) {}
 
-  setState(raw: unknown): void {
-    const s = (raw ?? {}) as Partial<ListState>;
-    this.state = { showCompleted: s.showCompleted === true };
-    this.rerender();
-  }
-
   update(items: PlannerItem[], settings: PlannerSettings, lang: Lang): void {
-    this.last = { items, settings, lang };
-    this.rerender();
-  }
-
-  private rerender(): void {
-    if (!this.last) {
-      return;
-    }
-    render(
-      <TaskList
-        {...this.last}
-        state={this.state}
-        onState={(state) => {
-          this.state = state;
-          post({ type: 'saveListState', state });
-          this.rerender();
-        }}
-      />,
-      this.root,
-    );
+    render(<TaskList items={items} settings={settings} lang={lang} />, this.root);
   }
 }

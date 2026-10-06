@@ -19,7 +19,6 @@ type ExtensionMessage =
   | { type: 'items'; items: PlannerItem[] }
   | { type: 'view'; view: View }
   | { type: 'tableState'; state: unknown }
-  | { type: 'listState'; state: unknown }
   | { type: 'body'; key: string; body?: string }
   | { type: 'newItem' }
   | {
@@ -110,6 +109,10 @@ function renderAppBar() {
   document
     .querySelectorAll<HTMLButtonElement>('button[data-view]')
     .forEach((b) => b.classList.toggle('active', b.dataset.view === state.view));
+  // "Show completed" applies to every view; settings has its own controls.
+  const showDone = $<HTMLInputElement>('show-done');
+  showDone.checked = !state.settings.hideDone;
+  $('show-done-switch').hidden = state.view === 'settings';
   $('nav-title').textContent =
     state.view === 'calendar' ? state.calendarNav.title : state.view === 'settings' ? t(state.lang, 'settings.title') : '';
   const range = $('range');
@@ -162,6 +165,13 @@ document.querySelectorAll<HTMLButtonElement>('button[data-view]').forEach((butto
 $('nav-today').addEventListener('click', () => (state.view === 'gantt' ? gantt.today() : calendar.today()));
 $('nav-prev').addEventListener('click', () => calendar.prev());
 $('nav-next').addEventListener('click', () => calendar.next());
+$<HTMLInputElement>('show-done').addEventListener('change', (e) => {
+  const hideDone = !(e.currentTarget as HTMLInputElement).checked;
+  // Apply right away; the setting write comes back as a config update.
+  state.settings = { ...state.settings, hideDone };
+  post({ type: 'updateSetting', key: 'hideDone', value: hideDone || undefined });
+  render();
+});
 $('new-item').addEventListener('click', () => newItem({ start: formatDate(new Date()) }));
 
 window.addEventListener('message', (e: MessageEvent<ExtensionMessage>) => {
@@ -181,9 +191,6 @@ window.addEventListener('message', (e: MessageEvent<ExtensionMessage>) => {
       break;
     case 'tableState':
       table.setState(message.state);
-      break;
-    case 'listState':
-      list.setState(message.state);
       break;
     case 'config':
       state.settings = message.settings;

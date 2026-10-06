@@ -56,7 +56,10 @@ function Board({ items, settings, lang }: BoardProps) {
     const today = formatDate(new Date());
     const remaining = new Map(shown.map((i) => [i.key, remainingBusinessDays(i, today, cal, settings)] as const));
     return {
-      columns: buildBoard(shown, settings.statuses, (i) => remaining.get(i.key)),
+      // "Show completed" off hides the done columns (cards get there via the list's check).
+      columns: buildBoard(shown, settings.statuses, (i) => remaining.get(i.key)).filter(
+        (c) => !(settings.hideDone && c.status.done),
+      ),
       remaining,
       parents: parentMap(shown),
     };

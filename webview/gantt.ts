@@ -144,7 +144,8 @@ export class GanttView {
       const status = resolveStatus(item.status, settings.statuses);
       return {
         id: `t${i}`,
-        name: row.depth > 0 ? `${'　'.repeat(row.depth - 1)}└ ${item.title}` : item.title,
+        // Hierarchy shows as summary bars over the children (see style.css), not in names.
+        name: item.title,
         start: toGanttDate(row.start),
         end: toGanttDate(row.end),
         progress: itemProgress(item, settings.statuses),

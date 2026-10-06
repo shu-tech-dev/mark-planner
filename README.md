@@ -63,13 +63,15 @@ New files are named after their ID only, e.g. `tk2m9a.md`. You find items in the
 
 ## Views
 
+**Show completed** in the top bar shows or hides completed tasks in every view at once (the board hides its done columns; the table keeps a completed parent when it has open children). It is the `markPlanner.hideDone` setting.
+
 ### Calendar
 
 Month, week and day views. The shape tells the type: tasks have a line on the left (in their status color), events are filled pills and vacations are striped. Drag to move, drag the edge to resize, click a day to create an item on that day. Hover for a tooltip with the parent path, status, dates, workdays and tags.
 
 ### Gantt chart
 
-Parents are followed by their children (`└`); `depends` draws arrows. A parent without dates gets a dotted bar spanning its children. Bars show progress (checklist ratio, or the status's configured progress). Day / Week / Month scales.
+Parents are followed by their children and drawn as a summary bar — a thin band with hooks at both ends — with the name above it; `depends` draws arrows. A parent without dates gets a lighter summary bar spanning its children. Bars show progress (checklist ratio, or the status's configured progress). Day / Week / Month scales.
 
 ### Table
 
@@ -149,10 +151,11 @@ Open **⚙** in the planner panel (or **Mark Planner: Open Settings**). Values a
 | `markPlanner.calendarView` | `month` | Initial calendar view |
 | `markPlanner.weekStart` | `0` (Sunday) | First day of the week |
 | `markPlanner.ganttViewMode` | `Day` | Initial Gantt scale |
-| `markPlanner.hideDone` | `false` | Hide completed tasks |
+| `markPlanner.hideDone` | `false` | Hide completed tasks in every view (the top bar's Show completed) |
 | `markPlanner.maxEventsPerDay` | `0` (no limit) | Items per calendar day before "+N more" |
 | `markPlanner.weekendColors` | `{"0": "#f14c4c", "6": "#3794ff"}` | Days off by weekday and their colors |
 | `markPlanner.showHolidays` | `true` | Show Japanese public holidays |
+| `markPlanner.hideWeekends` | `false` | Hide the days off in `weekendColors` (e.g. weekends) from the calendar; the Gantt chart keeps them shaded |
 | `markPlanner.holidayColor` / `vacationColor` | `#f14c4c` / `#2ea043` | Colors for holidays / vacations |
 | `markPlanner.language` | `auto` | UI language: `auto` / `en` / `ja` |
 

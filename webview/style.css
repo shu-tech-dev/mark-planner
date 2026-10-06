@@ -29,6 +29,9 @@
   --mp-danger: #f87171;
   /* Tint layered over a background (keeps weekend/holiday colors on hover). */
   --mp-hover-overlay: rgba(255, 255, 255, 0.045);
+  --mp-scrollbar: rgba(255, 255, 255, 0.2);
+  /* Native parts (scrollbars, selects, checkboxes) follow the planner theme. */
+  color-scheme: dark;
   --mp-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px var(--mp-border);
 }
 
@@ -50,6 +53,8 @@ body.vscode-high-contrast-light:not([data-theme='dark']) {
   --mp-input: #ffffff;
   --mp-danger: #dc2626;
   --mp-hover-overlay: rgba(15, 23, 42, 0.04);
+  --mp-scrollbar: rgba(15, 23, 42, 0.25);
+  color-scheme: light;
   --mp-shadow: 0 10px 30px rgba(15, 23, 42, 0.12), 0 0 0 1px var(--mp-border);
 }
 
@@ -62,6 +67,9 @@ body {
   padding: 0;
 }
 body {
+  /* The planner's theme, not VS Code's (the webview's default scrollbar styles
+     follow VS Code). Inherited by every scrolling element. */
+  scrollbar-color: var(--mp-scrollbar) transparent;
   display: flex;
   flex-direction: column;
   color: var(--mp-text);
@@ -572,25 +580,30 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev-holiday {
 .gantt .bar-wrapper[class*='_x-1_'] {
   opacity: 0.55;
 }
+/* Parents: a summary bar (as in MS Project) spanning their children — a thin band
+   with downward hooks at both ends, cut out of the bar with clip-path and set low
+   in the row, with the name above it. */
 .gantt .bar-wrapper.bar-wrapper[class*='_p-1_'] .bar {
+  height: 16px;
+  rx: 0;
+  ry: 0;
+  transform: translateY(8px);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, calc(100% - 11px) 40%, 11px 40%, 0 100%);
   fill: var(--mp-text-muted);
-  fill-opacity: 0.18;
-  stroke: var(--mp-text-muted);
-  stroke-opacity: 0.4;
+  fill-opacity: 0.9;
+  stroke: none;
 }
-.gantt .bar-wrapper.bar-wrapper[class*='_p-1_'] .bar-progress {
-  fill: var(--mp-text-muted);
-  fill-opacity: 0.35;
+.gantt .bar-wrapper[class*='_p-1_'] .bar-progress {
+  display: none;
 }
 .gantt .bar-wrapper[class*='_p-1_'] .bar-label {
   font-weight: 700;
+  fill: var(--mp-text);
+  transform: translateY(-9px);
 }
-.gantt .bar-wrapper[class*='_d-1_'] .bar {
-  stroke-dasharray: 4 3;
-  stroke-opacity: 0.7;
-}
-.gantt .bar-wrapper[class*='_d-1_'] .bar-progress {
-  display: none;
+/* A parent without its own dates (span taken from the children) is lighter. */
+.gantt .bar-wrapper.bar-wrapper[class*='_p-1_'][class*='_d-1_'] .bar {
+  fill-opacity: 0.45;
 }
 /* The bar popup is replaced by the shared tooltip. */
 .gantt-container .popup-wrapper {
@@ -1689,11 +1702,6 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev-holiday {
   margin: 0 auto;
   padding: 4px 4px 40px;
 }
-.tl-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 4px;
-}
 .switch {
   display: inline-flex;
   align-items: center;
@@ -1702,6 +1710,9 @@ body.vscode-high-contrast-light:not([data-theme='dark']) .fc .mp-ev-holiday {
   font-size: 12px;
   cursor: pointer;
   user-select: none;
+}
+.switch[hidden] {
+  display: none;
 }
 .switch input {
   position: absolute;
